@@ -1,5 +1,3 @@
--- 🔐 Arii Obfuscated Loader - Versi Base64 Delta Executor Compatible
-
 -- Base64 Decode Function
 local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 local function decode(data)
