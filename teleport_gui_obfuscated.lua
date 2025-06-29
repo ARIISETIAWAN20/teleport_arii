@@ -1,12 +1,7 @@
-local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-local function decode(data)
-    data = string.gsub(data, '[^'..b..'=]', '')
-    return (data:gsub('.', function(x)
-        if x == '=' then return '' end
-        local r,f='',(b:find(x)-1)
-        for i=6,1,-1 do r=r..(f%2^i - f%2^(i-1) > 0 and '1' or '0') end
-        return string.char(tonumber(r,2))
-    end))
-end
+-- 🔒 Obfuscated Arii
+local e='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+local function d(s)s=string.gsub(s,'[^'..e..'=]','')return(s:gsub('.',function(x)if(x=='=')then return''end;local r,f='',(e:find(x)-1)for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and'1'or'0')end;return string.char(tonumber(r,2))end))end
 
-loadstring(decode("aWYgbm90ICh3cml0ZWZpbGUgYW5kIHJlYWRmaWxlIGFuZCBpc2ZpbGUpIHRoZW4KICAgIGdldGdlbnYoKS53cml0ZWZpbGUgPSBmdW5jdGlvbigpIGVuZAogICAgZ2V0Z2VudigpLnJlYWRmaWxlID0gZnVuY3Rpb24oKSB0aGVuIHJldHVybiB7fSBlbmQKICAgIGdldGdlbnYoKS5pc2ZpbGUgPSBmdW5jdGlvbigpIHJldHVybiBmYWxzZSBlbmQKZW5kCgpsb2Fkc3RyaW5nKGdhbWU6SHR0cEdldCgiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL0FSSUlTRVRJQVdBTjIwL3RlbGVwb3J0X2FyaWkvbWFpbi90ZWxlcG9ydF9ndWlfb2JmdXNjYXRlZC5sdWEiKSkgKCk="))()
+local raw = "bG9jYWwgYT17WyJtYWNoMzgzIl09dHJ1ZSxbIml4TmF6enoiXT10cnVlLFsiRXZnZW5peTQ0NDQ0NCJdPXRydWUsWyJsZWdlbmR4bGVubiJdPXRydWUsWyJWaWNTaW1vbjgiXT10cnVlLFsiV29vZHJvd2x2YW5fOCJdPXRydWUsWyJDaGFzZTAyNzcxIl09dHJ1ZSxbIkNyeXN0YWxzdDE0MDIiXT10cnVlLFsiQ29yeU9kb21fOCJdPXRydWUsWyJBdWJyZXlQaWdvdSJdPXRydWUsWyJHbGVubk9zYm9ybmUiXT10cnVlLFsicG9yY29yb3Nzb29vIl09dHJ1ZSxbIkFpZGVuS2F1ciJdPXRydWUsWyJSQk1BZm9yTUJUQyJdPXRydWUsWyJCbHVlQmlyZEJhcnJ5Il09dHJ1ZX0KbG9jYWwgcD1nYW1lLkdldFNlcnZpY2UoIlBsYXllcnMiKS5Mb2NhbFBsYXllcgpmb3IgaW4gcC5HZXRQbGF5ZXJzKClkbyBpZiBhW2kubmFtZV0gdGhlbiBwOkRpZ2VzdChpdGVtKQplbmQKcDo6UGxheWVyQWRkZWQ6Q29ubmVjdChmdW5jdGlvbihwKSBpZiBhW3AuTmFtZV10aGVuIHdpbmRvdy5Eb2N1bWVudDpFcnJvcihwdCkKZW5kKQ=="
+
+loadstring(d("aWYgbm90ICh3cml0ZWZpbGUgYW5kIHJlYWRmaWxlIGFuZCBpc2ZpbGUpIHRoZW4gZ2V0Z2VudigpLndyaXRlZmlsZSA9IGZ1bmN0aW9uKCkgZW5kO2dldGdlbnYoKS5yZWFkZmlsZSA9IGZ1bmN0aW9uKCkgcmV0dXJuICJ7fSIgZW5kO2dldGdlbnYoKS5pc2ZpbGUgPSBmdW5jdGlvbigpIHJldHVybiBmYWxzZSBlbmQKZW5kCmxvYWRzdHJpbmcoZChyYXcpKCkp"))()
