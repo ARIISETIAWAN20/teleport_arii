@@ -1,4 +1,4 @@
--- 🔒 Obfuscated Script by Ari
+-- 🔒 Obfuscated
 local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 function decode(data)
     data = string.gsub(data, '[^'..b..'=]', '')
