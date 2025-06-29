@@ -1,5 +1,4 @@
 -- 🔐 Obfuscated Arii 
-
 local function protect()
     local s = {
         ["teleportPoints"] = {p1=nil,p2=nil},
