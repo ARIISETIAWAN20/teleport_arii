@@ -249,19 +249,11 @@ createButton("❌ OFF Auto Teleport", function()
     autoBtn.Text = "▶️ Start Auto Teleport"
 end)
 
-local credit = Instance.new("TextLabel")
-credit.Size = UDim2.new(1, 0, 0, 14)
-credit.BackgroundTransparency = 1
-credit.TextColor3 = Color3.fromRGB(180, 180, 180)
-credit.Font = Enum.Font.GothamSemibold
-credit.TextSize = 11
-credit.Text = "By Ari"
-credit.Parent = MainFrame
-
 minimizeButton.MouseButton1Click:Connect(function()
     contentFrame.Visible = not contentFrame.Visible
+    MainFrame.BackgroundTransparency = contentFrame.Visible and 0 or 1
     for _, v in pairs(contentFrame:GetChildren()) do
-        if v:IsA("TextButton") or v:IsA("TextBox") or v:IsA("TextLabel") then
+        if v:IsA("TextButton") or v:IsA("TextBox") then
             v.Visible = contentFrame.Visible
         end
     end
