@@ -1,4 +1,4 @@
--- ✅ Teleport GUI "Arii" versi final + Proteksi Lengkap + HWID Lock + Akun Aman
+-- ✅ Teleport GUI "Arii" versi final + Proteksi Lengkap + HWID Lock + Akun Aman + Minimize Fix + Anti Clip Sederhana
 
 -- Proteksi Fungsi File (untuk Executor HP/Delta)
 if not (writefile and readfile and isfile) then
@@ -17,7 +17,7 @@ local teleportPoints = {point1 = nil, point2 = nil}
 local autoTeleport = false
 local delayTime = 8
 
--- ✅ Blacklist Staff
+-- Blacklist Staff
 local blacklist = {
     ["mach383"] = true, ["ixNazzz"] = true, ["Evgeniy444444"] = true,
     ["legendxlenn"] = true, ["VicSimon8"] = true, ["Woodrowlvan_8"] = true,
@@ -26,22 +26,20 @@ local blacklist = {
     ["AidenKaur"] = true, ["RBMAforMBTC"] = true, ["BlueBirdBarry"] = true
 }
 
--- 🔒 Proteksi DeepScan + Kick jika ada staff masuk
+-- Deep Scan + Auto Kick
 local function deepScan()
     for _, plr in pairs(Players:GetPlayers()) do
         local name = plr.Name:lower()
         local desc = plr:FindFirstChild("HumanoidDescription")
         if blacklist[name] or (desc and tostring(desc):lower():find("moderator")) then
-            player:Kick("Staff / Moderasi terdeteksi (deep scan)")
+            player:Kick("Staff / Moderasi terdeteksi")
         end
     end
 end
 deepScan()
 Players.PlayerAdded:Connect(function(p)
     if blacklist[p.Name] then
-        StarterGui:SetCore("SendNotification", {
-            Title = "Auto Leave", Text = "Staff terdeteksi. Keluar game.", Duration = 1
-        })
+        StarterGui:SetCore("SendNotification", {Title = "Auto Leave", Text = "Staff Terdeteksi", Duration = 1})
         wait(2)
         player:Kick("Staff terdeteksi")
     end
@@ -55,7 +53,7 @@ for _, p in pairs(Players:GetPlayers()) do
     end
 end
 
--- 🔐 Proteksi Bypass Fungsi Lingkungan
+-- Proteksi Lingkungan
 pcall(function()
     for _,v in pairs(getnilinstances()) do
         if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
@@ -67,69 +65,48 @@ pcall(function()
     hookfunction(getgenv, function(...) return {} end)
     getgenv()._G = {}; getgenv().shared = {}
 end)
-
 StarterGui:SetCore("SendNotification", {
-    Title = "Anti Cheat", Text = "Proteksi sederhana diaktifkan", Duration = 5
+    Title = "Anti Cheat", Text = "Proteksi aktif", Duration = 5
 })
 
--- 🧊 HWID Lock + Izinkan akun tertentu
+-- HWID Lock + Nama Aman
 pcall(function()
-    local allowedHWID = "HWID_ARI_123" -- Ganti dengan HWID kamu
-    local allowedUsers = {
-        ["supa_loi"] = true,
-        ["Devrenzx"] = true
-    }
-
-    local function getHWID()
-        return tostring(game:GetService("RbxAnalyticsService"):GetClientId())
-    end
-
-    if not allowedUsers[player.Name] then
-        if getHWID() ~= allowedHWID then
-            player:Kick("Perangkat tidak diizinkan (HWID Lock)")
-        end
+    local allowedHWID = "HWID_ARI_123" -- Ganti sesuai HWID kamu
+    local allowedUsers = {["supa_loi"] = true, ["Devrenzx"] = true}
+    local function getHWID() return tostring(game:GetService("RbxAnalyticsService"):GetClientId()) end
+    if not allowedUsers[player.Name] and getHWID() ~= allowedHWID then
+        player:Kick("Perangkat tidak diizinkan (HWID Lock)")
     end
 end)
 
--- 🛡️ Proteksi Remote Spoofing
+-- Proteksi Remote Spoof
 pcall(function()
     local mt = getrawmetatable(game)
     setreadonly(mt, false)
-    local oldNamecall = mt.__namecall
+    local old = mt.__namecall
     mt.__namecall = newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        if tostring(self):lower():find("log") or tostring(self):lower():find("report") then
-            return nil
-        end
-        return oldNamecall(self, ...)
+        if tostring(self):lower():find("log") or tostring(self):lower():find("report") then return nil end
+        return old(self, ...)
     end)
 end)
 
--- 💣 Hapus Signature Arii di getgenv
+-- Hapus Signature
 pcall(function()
     for k, v in pairs(getgenv()) do
-        if typeof(v) == "string" and v:lower():find("ari") then
-            getgenv()[k] = nil
-        end
+        if typeof(v) == "string" and v:lower():find("ari") then getgenv()[k] = nil end
     end
 end)
 
--- 💠 Fungsi-fungsi utama GUI Arii
+-- Fungsi Load/Save Point
 local function loadPoints()
     if isfile(filename) then
-        local success, data = pcall(function()
-            return HttpService:JSONDecode(readfile(filename))
-        end)
-        if success and type(data) == "table" then
-            teleportPoints = data
-        end
+        local ok, data = pcall(function() return HttpService:JSONDecode(readfile(filename)) end)
+        if ok and type(data) == "table" then teleportPoints = data end
     end
 end
 
 local function savePoints()
-    pcall(function()
-        writefile(filename, HttpService:JSONEncode(teleportPoints))
-    end)
+    pcall(function() writefile(filename, HttpService:JSONEncode(teleportPoints)) end)
 end
 
 local function getHRP()
@@ -153,7 +130,7 @@ local function teleportTo(point)
     end
 end
 
--- 📦 UI Building
+-- GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "TeleportGUI"
 pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
@@ -172,7 +149,6 @@ title.Size = UDim2.new(1, 0, 0, 16)
 title.Text = "Arii"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-title.BorderSizePixel = 0
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 14
 title.Parent = MainFrame
@@ -183,7 +159,6 @@ minimizeButton.Position = UDim2.new(1, -14, 0, 0)
 minimizeButton.Text = "-"
 minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 minimizeButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-minimizeButton.BorderSizePixel = 0
 minimizeButton.Parent = MainFrame
 
 local contentFrame = Instance.new("Frame")
@@ -198,7 +173,6 @@ local function createButton(text, y, callback)
     b.Position = UDim2.new(0, 5, 0, y)
     b.BackgroundColor3 = Color3.fromRGB(80, 80, 160)
     b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.BorderSizePixel = 0
     b.Font = Enum.Font.SourceSansBold
     b.TextSize = 13
     b.Text = text
@@ -255,9 +229,17 @@ credit.TextSize = 11
 credit.Text = "By Ari"
 credit.Parent = MainFrame
 
--- 🔁 Auto Teleport Loop
+-- Minimize Toggle
+local minimized = false
+minimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    contentFrame.Visible = not minimized
+    minimizeButton.Text = minimized and "+" or "-"
+end)
+
+-- Auto Teleport Loop
 spawn(function()
-    while true do wait(1)
+    while task.wait(1) do
         if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
             teleportTo(teleportPoints.point1)
             wait(delayTime)
@@ -266,28 +248,20 @@ spawn(function()
     end
 end)
 
--- 🚫 Anti Idle
+-- Anti Idle
 for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
 
--- 🧱 Anti Clip Deteksi Tembus Part
+-- Anti Clip Sederhana (jatuh ke bawah)
 RunService.Stepped:Connect(function()
     local hrp = getHRP()
     if hrp and not hrp.Anchored then
-        hrp.Velocity = Vector3.new(0, math.max(hrp.Velocity.Y, -50), 0)
-        local touching = workspace:GetPartsInPart(hrp)
-        for _, part in pairs(touching) do
-            if part.CanCollide and part.Transparency < 0.2 and not part:IsDescendantOf(player.Character) then
-                StarterGui:SetCore("SendNotification", {
-                    Title = "Anti Clip", Text = "Clip terdeteksi. Reset posisi.", Duration = 2
-                })
-                teleportTo(teleportPoints.point1 or hrp.Position)
-                break
-            end
+        if hrp.Position.Y < -100 then
+            teleportTo(teleportPoints.point1 or Vector3.new(0, 50, 0))
         end
     end
 end)
 
--- 🚶 Anti stuck saat respawn
+-- Respawn Unstuck
 player.CharacterAdded:Connect(function(char)
     char:WaitForChild("Humanoid").StateChanged:Connect(function(_, newState)
         if newState == Enum.HumanoidStateType.Physics then
@@ -296,5 +270,5 @@ player.CharacterAdded:Connect(function(char)
     end)
 end)
 
--- 🔄 Load Teleport Data
+-- Load point dari file
 loadPoints()
