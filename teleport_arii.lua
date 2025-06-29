@@ -1,4 +1,4 @@
--- ✅ Teleport GUI "Arii" versi gabungan dua UI + Proteksi Lengkap
+-- ✅ Teleport GUI "Arii" versi final + Proteksi Lengkap + HWID Lock + Akun Aman
 
 -- Proteksi Fungsi File (untuk Executor HP/Delta)
 if not (writefile and readfile and isfile) then
@@ -72,14 +72,22 @@ StarterGui:SetCore("SendNotification", {
     Title = "Anti Cheat", Text = "Proteksi sederhana diaktifkan", Duration = 5
 })
 
--- 🧊 Proteksi HWID Lock
+-- 🧊 HWID Lock + Izinkan akun tertentu
 pcall(function()
-    local allowedHWID = "HWID_ARI_123" -- Ganti ini dengan HWID kamu
+    local allowedHWID = "HWID_ARI_123" -- Ganti dengan HWID kamu
+    local allowedUsers = {
+        ["supa_loi"] = true,
+        ["Devrenzx"] = true
+    }
+
     local function getHWID()
         return tostring(game:GetService("RbxAnalyticsService"):GetClientId())
     end
-    if getHWID() ~= allowedHWID then
-        player:Kick("Perangkat tidak diizinkan (HWID Lock)")
+
+    if not allowedUsers[player.Name] then
+        if getHWID() ~= allowedHWID then
+            player:Kick("Perangkat tidak diizinkan (HWID Lock)")
+        end
     end
 end)
 
