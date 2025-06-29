@@ -1,15 +1,4 @@
-local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-function decode(data)
-    data = string.gsub(data, '[^'..b..'=]', '')
-    return (data:gsub('.', function(x)
-        if (x == '=') then return '' end
-        local r,f='',(b:find(x)-1)
-        for i=6,1,-1 do r=r..(f%2^i - f%2^(i-1) > 0 and '1' or '0') end
-        return string.char(tonumber(r,2))
-    end))
-end
-
--- ✅ Teleport GUI decode("QXJpaQ==") - Versi Delta Mobile Safe + Tween Fast Teleport
+-- ✅ Teleport GUI "Arii" - Versi Final dengan Tween, UI Enhanced, Speed Control, dan Auto Save
 
 -- Proteksi Fungsi File (Delta Friendly)
 pcall(function()
@@ -20,17 +9,16 @@ pcall(function()
     end
 end)
 
-local PL = game:GetService("PL")
-local p = PL.LocalPlayer
-local HS = game:GetService("HS")
-local RS = game:GetService("RS")
-local SG = game:GetService("SG")
-local TS = game:GetService("TS")
-
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
 local filename = "teleport_points.json"
-local tp = {point1 = nil, point2 = nil}
-local auto = false
-local dt = 8
+local teleportPoints = {point1 = nil, point2 = nil, speed1 = 1.5, speed2 = 1.5}
+local autoTeleport = false
+local delayTime = 8
 
 -- Blacklist Staff
 local blacklist = {
@@ -40,27 +28,28 @@ local blacklist = {
     ["AubreyPigou"] = true, ["GlennOsborne"] = true, ["porcorossooo"] = true,
     ["AidenKaur"] = true, ["RBMAforMBTC"] = true, ["BlueBirdBarry"] = true
 }
+
 local function deepScan()
-    for _, plr in pairs(PL:GetPlayers()) do
+    for _, plr in pairs(Players:GetPlayers()) do
         if blacklist[plr.Name] then
-            p:Kick("Staff terdeteksi")
+            player:Kick("Staff terdeteksi")
         end
     end
 end
 deepScan()
-PL.PlayerAdded:Connect(function(p)
+Players.PlayerAdded:Connect(function(p)
     wait(1)
     if blacklist[p.Name] then
-        SG:SetCore("SendNotification", {Title = decode("QXV0byBMZWF2ZQ=="), Text = decode("U3RhZmYgVGVyZGV0ZWtzaQ=="), Duration = 1})
+        StarterGui:SetCore("SendNotification", {Title = "Auto Leave", Text = "Staff Terdeteksi", Duration = 1})
         wait(1)
-        p:Kick("Staff terdeteksi")
+        player:Kick("Staff terdeteksi")
     end
 end)
 
 -- HWID Lock
 pcall(function()
-    local allowedHWID = decode("SFdJRF9BUklfMTIz")
-    local allowedUsers = {["supa_loi"] = true, ["Devrenzx"] = true}
+    local allowedHWID = "HWID_ARI_123"
+    local allowedUsers = { ["supa_loi"] = true, ["Devrenzx"] = true }
     local function getHWID()
         local id = "UNKNOWN"
         pcall(function()
@@ -68,8 +57,8 @@ pcall(function()
         end)
         return id
     end
-    if not allowedUsers[p.Name] and getHWID() ~= allowedHWID then
-        p:Kick(decode("UGVyYW5na2F0IHRpZGFrIGRpaXppbmthbiAoSFdJRCBMb2NrKQ=="))
+    if not allowedUsers[player.Name] and getHWID() ~= allowedHWID then
+        player:Kick("Perangkat tidak diizinkan (HWID Lock)")
     end
 end)
 
@@ -86,41 +75,57 @@ pcall(function()
     end)
 end)
 
--- Load/Save Point
-local function lP()
+-- Load/Save Points
+local function loadPoints()
     if isfile and isfile(filename) then
         local success, data = pcall(function()
-            return HS:JSONDecode(readfile(filename))
+            return HttpService:JSONDecode(readfile(filename))
         end)
         if success and type(data) == "table" then
-            tp = data
+            teleportPoints = data
         end
     end
 end
-local function sP()
+
+local function savePoints()
     if writefile then
         pcall(function()
-            writefile(filename, HS:JSONEncode(tp))
+            writefile(filename, HttpService:JSONEncode(teleportPoints))
         end)
     end
 end
 
-local function gH()
-    local char = p.Character or p.CharacterAdded:Wait()
+local function getHRP()
+    local char = player.Character or player.CharacterAdded:Wait()
     return char:WaitForChild("HumanoidRootPart")
 end
 
--- ✅ TELEPORT DENGAN TWEEN (FAST)
-local function a9(point)
+local function effectFlash()
+    local flash = Instance.new("Part")
+    flash.Anchored = true
+    flash.CanCollide = false
+    flash.Size = Vector3.new(5, 5, 5)
+    flash.Shape = Enum.PartType.Ball
+    flash.Material = Enum.Material.Neon
+    flash.BrickColor = BrickColor.new("Electric blue")
+    flash.CFrame = getHRP().CFrame
+    flash.Parent = workspace
+    game:GetService("Debris"):AddItem(flash, 0.5)
+end
+
+local function teleportTo(point, speed)
     if point then
-        local char = p.Character or p.CharacterAdded:Wait()
-        local hrp = gH()
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
-        if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Physics) end
+        effectFlash()
+        local hrp = getHRP()
+        local destination = Vector3.new(point.x, point.y + 3, point.z)
+        local tweenInfo = TweenInfo.new(speed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = TweenService:Create(hrp, tweenInfo, {CFrame = CFrame.new(destination)})
 
         hrp.Anchored = true
-        local targetCFrame = CFrame.new(point.x, point.y + 3, point.z)
-        local tween = TS:Create(hrp, TweenInfo.new(0.4, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+        hrp.Velocity = Vector3.zero
+        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Physics) end
+
         tween:Play()
         tween.Completed:Wait()
 
@@ -129,4 +134,181 @@ local function a9(point)
     end
 end
 
--- GUI Section and rest continues...
+-- GUI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "TeleportGUI"
+pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
+if not ScreenGui.Parent then
+    ScreenGui.Parent = player:WaitForChild("PlayerGui")
+end
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 170, 0, 250)
+MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -20, 0, 20)
+title.Text = "🚀 Arii Teleport GUI"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.Position = UDim2.new(0, 0, 0, 0)
+title.Parent = MainFrame
+
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 16, 0, 16)
+minimizeButton.Position = UDim2.new(1, -18, 0, 2)
+minimizeButton.Text = "-"
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.TextSize = 12
+minimizeButton.Parent = MainFrame
+
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, -22)
+contentFrame.Position = UDim2.new(0, 0, 0, 22)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = MainFrame
+
+Instance.new("UIListLayout", contentFrame).Padding = UDim.new(0, 5)
+Instance.new("UIPadding", contentFrame).PaddingTop = UDim.new(0, 5)
+
+local function createButton(text, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, -10, 0, 22)
+    b.BackgroundColor3 = Color3.fromRGB(60, 100, 180)
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 12
+    b.Text = text
+    b.Parent = contentFrame
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    b.MouseButton1Click:Connect(callback)
+    return b
+end
+
+local function createSlider(titleText, defaultVal, callback)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 16)
+    label.Text = titleText
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 11
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.Parent = contentFrame
+
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, -10, 0, 20)
+    box.Text = tostring(defaultVal)
+    box.ClearTextOnFocus = false
+    box.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 12
+    box.Parent = contentFrame
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+
+    box.FocusLost:Connect(function()
+        local val = tonumber(box.Text)
+        if val and val > 0 and val <= 10 then
+            callback(val)
+            savePoints()
+        else
+            box.Text = tostring(defaultVal)
+        end
+    end)
+end
+
+-- Tombol utama
+createButton("🚀 Teleport to Point 1", function() teleportTo(teleportPoints.point1, teleportPoints.speed1) end)
+createButton("🚀 Teleport to Point 2", function() teleportTo(teleportPoints.point2, teleportPoints.speed2) end)
+createButton("📌 Set Point 1", function()
+    local hrp = getHRP()
+    teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+    savePoints()
+end)
+createButton("📌 Set Point 2", function()
+    local hrp = getHRP()
+    teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+    savePoints()
+end)
+
+createSlider("⏩ Speed Point 1 (1-10)", teleportPoints.speed1, function(v)
+    teleportPoints.speed1 = v
+end)
+createSlider("⏩ Speed Point 2 (1-10)", teleportPoints.speed2, function(v)
+    teleportPoints.speed2 = v
+end)
+
+local delayBox = Instance.new("TextBox")
+delayBox.Size = UDim2.new(1, -10, 0, 20)
+delayBox.Text = tostring(delayTime)
+delayBox.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+delayBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+delayBox.Font = Enum.Font.Gotham
+delayBox.TextSize = 12
+delayBox.ClearTextOnFocus = false
+delayBox.Parent = contentFrame
+Instance.new("UICorner", delayBox).CornerRadius = UDim.new(0, 6)
+delayBox.FocusLost:Connect(function()
+    local val = tonumber(delayBox.Text)
+    if val and val > 0 then delayTime = val end
+end)
+
+local autoBtn = createButton("▶️ Start Auto Teleport", function()
+    autoTeleport = not autoTeleport
+    autoBtn.Text = autoTeleport and "⏹ Stop Auto Teleport" or "▶️ Start Auto Teleport"
+end)
+
+createButton("❌ OFF Auto Teleport", function()
+    autoTeleport = false
+    autoBtn.Text = "▶️ Start Auto Teleport"
+end)
+
+local credit = Instance.new("TextLabel")
+credit.Size = UDim2.new(1, 0, 0, 14)
+credit.BackgroundTransparency = 1
+credit.TextColor3 = Color3.fromRGB(180, 180, 180)
+credit.Font = Enum.Font.GothamSemibold
+credit.TextSize = 11
+credit.Text = "By Ari"
+credit.Parent = MainFrame
+
+minimizeButton.MouseButton1Click:Connect(function()
+    contentFrame.Visible = not contentFrame.Visible
+    minimizeButton.Text = contentFrame.Visible and "-" or "+"
+end)
+
+-- Auto Teleport
+spawn(function()
+    while task.wait(1) do
+        if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
+            teleportTo(teleportPoints.point1, teleportPoints.speed1)
+            wait(delayTime)
+            teleportTo(teleportPoints.point2, teleportPoints.speed2)
+        end
+    end
+end)
+
+-- Anti Idle
+for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
+
+-- Anti Clip (Jatuh)
+RunService.Stepped:Connect(function()
+    local hrp = getHRP()
+    if hrp and not hrp.Anchored then
+        if hrp.Position.Y < -100 then
+            teleportTo(teleportPoints.point1 or Vector3.new(0, 50, 0), teleportPoints.speed1)
+        end
+    end
+end)
+
+-- Load Point
+loadPoints()
