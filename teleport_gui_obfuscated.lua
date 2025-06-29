@@ -117,7 +117,7 @@ local function teleportTo(point)
  if not point then return end
  local char = player.Character or player.CharacterAdded:Wait()
  local hrp = getHRP()
- local success = pcall(function()
+ pcall(function()
   hrp.Anchored = true
   hrp.Velocity = Vector3.zero
   local humanoid = char:FindFirstChildOfClass("Humanoid")
@@ -128,12 +128,14 @@ local function teleportTo(point)
   hrp.Anchored = false
   if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Running) end
  end)
- if not success then warn("Gagal teleport") end
 end
 
 -- UI Builder
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local gui = Instance.new("ScreenGui")
 gui.Name = "ScProjectGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 160, 0, 198)
 frame.Position = UDim2.new(0.05, 0, 0.2, 0)
@@ -150,8 +152,7 @@ title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 14
 title.BorderSizePixel = 0
-
-local minimize = Instance.new("TextButton", frame)
+\local minimize = Instance.new("TextButton", frame)
 minimize.Size = UDim2.new(0,14,0,14)
 minimize.Position = UDim2.new(1,-14,0,0)
 minimize.Text = "-"
@@ -178,8 +179,12 @@ local function createButton(text, y, callback)
  return btn
 end
 
-createButton("🚀 Teleport ke Point 1", 5, function() teleportTo(teleportPoints.point1) end)
-createButton("🚀 Teleport ke Point 2", 28, function() teleportTo(teleportPoints.point2) end)
+createButton("🚀 Teleport ke Point 1", 5, function()
+ if teleportPoints.point1 then teleportTo(teleportPoints.point1) end
+end)
+createButton("🚀 Teleport ke Point 2", 28, function()
+ if teleportPoints.point2 then teleportTo(teleportPoints.point2) end
+end)
 createButton("📌 Set Point 1", 51, function()
  local hrp = getHRP()
  teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
