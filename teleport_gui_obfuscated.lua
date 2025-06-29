@@ -1,4 +1,4 @@
--- ✅ Teleport GUI "Arii" - Final Fixed (Delta Safe, Proteksi Lengkap, UI Rapi, Auto Save)
+-- ✅ Teleport GUI "Arii" - Final Fixed (Delta Safe, Proteksi Lengkap, Tween Point 1 ➡️ 2)
 
 -- Proteksi Fungsi File (Delta Friendly)
 pcall(function()
@@ -14,6 +14,7 @@ local player = Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
 
 local filename = "teleport_points.json"
 local teleportPoints = {point1 = nil, point2 = nil}
@@ -64,7 +65,7 @@ pcall(function()
     end
 end)
 
--- Anti Logging (Delta Safe)
+-- Anti Logging
 pcall(function()
     local mt = getrawmetatable(game)
     if mt then
@@ -79,7 +80,7 @@ pcall(function()
     end
 end)
 
--- Auto Save & Load
+-- Load & Save
 local function loadPoints()
     if isfile and isfile(filename) then
         local success, data = pcall(function()
@@ -117,19 +118,26 @@ local function effectFlash()
     game:GetService("Debris"):AddItem(flash, 0.5)
 end
 
-local function teleportTo(point)
+-- Tween + Teleport
+local function teleportTo(point, useTween)
     if point then
         effectFlash()
+        local dest = Vector3.new(point.x, point.y, point.z)
         local hrp = getHRP()
-        local destination = Vector3.new(point.x, point.y + 3, point.z)
-        hrp.Anchored = true
-        hrp.CFrame = CFrame.new(destination)
-        hrp.Velocity = Vector3.zero
-        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Physics) end
-        task.wait(0.2)
-        hrp.Anchored = false
-        if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Running) end
+        if useTween then
+            hrp.Anchored = true
+            local tween = TweenService:Create(hrp, TweenInfo.new(1.5, Enum.EasingStyle.Quad), {CFrame = CFrame.new(dest + Vector3.new(0,3,0))})
+            tween:Play()
+            tween.Completed:Wait()
+            task.wait(0.1)
+            hrp.Anchored = false
+        else
+            hrp.Anchored = true
+            hrp.CFrame = CFrame.new(dest + Vector3.new(0,3,0))
+            hrp.Velocity = Vector3.zero
+            task.wait(0.2)
+            hrp.Anchored = false
+        end
     end
 end
 
@@ -137,16 +145,12 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "TeleportGUI"
 ScreenGui.ResetOnSpawn = false
-
-local function safeParent(gui)
-    local parent = nil
-    pcall(function() parent = game:GetService("CoreGui") end)
-    if not parent or parent == nil then
-        parent = player:WaitForChild("PlayerGui")
-    end
-    pcall(function() gui.Parent = parent end)
+pcall(function()
+    ScreenGui.Parent = game:GetService("CoreGui")
+end)
+if not ScreenGui.Parent then
+    ScreenGui.Parent = player:WaitForChild("PlayerGui")
 end
-safeParent(ScreenGui)
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 170, 0, 250)
@@ -209,8 +213,8 @@ local function createButton(text, callback)
     return b
 end
 
-createButton("🚀 Teleport to Point 1", function() teleportTo(teleportPoints.point1) end)
-createButton("🚀 Teleport to Point 2", function() teleportTo(teleportPoints.point2) end)
+createButton("🚀 Teleport to Point 1", function() teleportTo(teleportPoints.point1, false) end)
+createButton("🚀 Teleport to Point 2", function() teleportTo(teleportPoints.point2, true) end)
 createButton("📌 Set Point 1", function()
     local hrp = getHRP()
     teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
@@ -264,9 +268,9 @@ end)
 spawn(function()
     while task.wait(1) do
         if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
-            teleportTo(teleportPoints.point1)
+            teleportTo(teleportPoints.point1, false) -- Teleport instan
             wait(delayTime)
-            teleportTo(teleportPoints.point2)
+            teleportTo(teleportPoints.point2, true)  -- Tween kecepatan sedang
             wait(delayTime)
         end
     end
@@ -275,13 +279,13 @@ end)
 -- Anti Idle
 for _, v in pairs(getconnections(player.Idled)) do v:Disable() end
 
--- Auto Save From Fall
+-- Anti Fall
 RunService.Stepped:Connect(function()
     local hrp = getHRP()
     if hrp and not hrp.Anchored and hrp.Position.Y < -100 then
-        teleportTo(teleportPoints.point1 or Vector3.new(0, 50, 0))
+        teleportTo(teleportPoints.point1 or {x=0, y=50, z=0}, false)
     end
 end)
 
 loadPoints()
-print("✅ Arii Teleport GUI Loaded")
+print("✅ Arii Teleport GUI Loaded - Versi Tween Point1 ➡️ 2")
