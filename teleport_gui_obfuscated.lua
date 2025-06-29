@@ -1,5 +1,6 @@
--- ✅ Teleport GUI "Sc Project" FINAL - Delta Mobile Safe Version
+-- ✅ Teleport GUI "Arii" FINAL - Aman Delta + HWID Lock + GUI Mobile
 
+-- Proteksi Fungsi File (untuk Executor HP/Delta)
 if not (writefile and readfile and isfile) then
     getgenv().writefile = function() end
     getgenv().readfile = function() return "{}" end
@@ -10,13 +11,12 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 local filename = "teleport_points.json"
 local teleportPoints = {point1 = nil, point2 = nil}
 local autoTeleport = false
 local delayTime = 8
 
--- 🛡️ Staff Blacklist
+-- 🛡️ Blacklist Staff
 local blacklist = {
     ["mach383"] = true, ["ixNazzz"] = true, ["Evgeniy444444"] = true,
     ["legendxlenn"] = true, ["VicSimon8"] = true, ["Woodrowlvan_8"] = true,
@@ -25,34 +25,25 @@ local blacklist = {
     ["AidenKaur"] = true, ["RBMAforMBTC"] = true, ["BlueBirdBarry"] = true
 }
 
--- 🔎 Deep Scan Staff
-coroutine.wrap(function()
-    while true do
-        for _, v in pairs(getnilinstances()) do
-            if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-                local name = tostring(v):lower()
-                if name:find("kick") or name:find("ban") or name:find("spectate") then
-                    player:Kick("Staff memata-matai terdeteksi.")
-                end
-            end
+-- Deep Scan Staff
+local function deepScan()
+    for _, plr in pairs(Players:GetPlayers()) do
+        if blacklist[plr.Name:lower()] then
+            player:Kick("Staff / Moderator terdeteksi.")
         end
-        task.wait(3)
-    end
-end)()
-
--- Cek staff saat join
-Players.PlayerAdded:Connect(function(p)
-    if blacklist[p.Name] then
-        player:Kick("Staff terdeteksi")
-    end
-end)
-for _, p in pairs(Players:GetPlayers()) do
-    if blacklist[p.Name] and p ~= player then
-        player:Kick("Staff terdeteksi")
     end
 end
+deepScan()
+Players.PlayerAdded:Connect(function(p)
+    if blacklist[p.Name] then
+        wait(2)
+        player:Kick("Staff terdeteksi")
+    end
+    wait(1)
+    deepScan()
+end)
 
--- Anti Cheat Ringan
+-- Proteksi Anti Remote
 pcall(function()
     for _,v in pairs(getnilinstances()) do
         if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
@@ -61,85 +52,59 @@ pcall(function()
     end
 end)
 
--- Anti AFK
-player.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+-- HWID Lock + Nama Aman
+pcall(function()
+    local allowedHWID = "HWID_ARI_123" -- Ganti sesuai perangkat kamu
+    local allowedUsers = {["supa_loi"] = true, ["Devrenzx"] = true}
+    local function getHWID()
+        return tostring(game:GetService("RbxAnalyticsService"):GetClientId())
+    end
+    if not allowedUsers[player.Name] and getHWID() ~= allowedHWID then
+        player:Kick("Perangkat tidak diizinkan (HWID Lock)")
+    end
 end)
 
--- Load dan Save Point
+-- Auto Save / Load
 local function loadPoints()
     if isfile(filename) then
-        local success, data = pcall(function()
-            return HttpService:JSONDecode(readfile(filename))
-        end)
-        if success and type(data) == "table" then
-            teleportPoints = data
-        end
+        local ok, data = pcall(function() return HttpService:JSONDecode(readfile(filename)) end)
+        if ok and type(data) == "table" then teleportPoints = data end
     end
 end
+
 local function savePoints()
     pcall(function()
         writefile(filename, HttpService:JSONEncode(teleportPoints))
     end)
 end
 
--- Auto Save Posisi
-coroutine.wrap(function()
-    while true do
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local pos = hrp.Position
-            for i = 1, 2 do
-                local key = "point"..i
-                local point = teleportPoints[key]
-                if point then
-                    local pVec = Vector3.new(point.x, point.y, point.z)
-                    if (pos - pVec).Magnitude > 10 then
-                        teleportPoints[key] = {x=pos.X, y=pos.Y, z=pos.Z}
-                        savePoints()
-                    end
-                end
-            end
-        end
-        task.wait(3)
-    end
-end)()
-
--- Fungsi Teleport
 local function getHRP()
     local char = player.Character or player.CharacterAdded:Wait()
     return char:WaitForChild("HumanoidRootPart")
 end
 
 local function teleportTo(point)
-    if not point then return end
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = getHRP()
-    pcall(function()
+    if point then
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = getHRP()
         hrp.Anchored = true
         hrp.Velocity = Vector3.zero
         local humanoid = char:FindFirstChildOfClass("Humanoid")
         if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Physics) end
-        task.wait(0.1)
-        char:PivotTo(CFrame.new(point.x, point.y + 3, point.z))
-        task.wait(0.1)
+        wait(0.05)
+        char:PivotTo(CFrame.new(point.x, point.y + 1, point.z)) -- 🟢 hanya sedikit di atas tanah
+        wait(0.05)
         hrp.Anchored = false
         if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Running) end
-    end)
+    end
 end
 
--- UI Builder (tanpa CoreGui)
-local gui = Instance.new("ScreenGui")
-gui.Name = "ScProjectGui"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-gui.Parent = player:WaitForChild("PlayerGui")
+-- GUI Aman Mobile (tanpa CoreGui)
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "AriiTeleport"
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 160, 0, 198)
+frame.Size = UDim2.new(0, 145, 0, 180)
 frame.Position = UDim2.new(0.05, 0, 0.2, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.BorderSizePixel = 0
@@ -148,7 +113,7 @@ frame.Draggable = true
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 16)
-title.Text = "Sc Project"
+title.Text = "Arii GUI"
 title.BackgroundColor3 = Color3.fromRGB(45,45,45)
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.SourceSansBold
@@ -182,12 +147,8 @@ local function createButton(text, y, callback)
     return btn
 end
 
-createButton("🚀 Teleport ke Point 1", 5, function()
-    if teleportPoints.point1 then teleportTo(teleportPoints.point1) end
-end)
-createButton("🚀 Teleport ke Point 2", 28, function()
-    if teleportPoints.point2 then teleportTo(teleportPoints.point2) end
-end)
+createButton("🚀 Teleport ke Point 1", 5, function() teleportTo(teleportPoints.point1) end)
+createButton("🚀 Teleport ke Point 2", 28, function() teleportTo(teleportPoints.point2) end)
 createButton("📌 Set Point 1", 51, function()
     local hrp = getHRP()
     teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
@@ -223,23 +184,45 @@ createButton("❌ OFF Auto Teleport", 143, function()
     autoBtn.Text = "▶️ Start Auto Teleport"
 end)
 
--- Loop Auto Teleport
-coroutine.wrap(function()
-    while true do task.wait(1)
-        if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
-            teleportTo(teleportPoints.point1)
-            task.wait(delayTime)
-            teleportTo(teleportPoints.point2)
-        end
-    end
-end)()
+content.Parent = frame
 
--- Minimize Toggle
+-- Minimize
 local minimized = false
 minimize.MouseButton1Click:Connect(function()
     minimized = not minimized
     content.Visible = not minimized
     minimize.Text = minimized and "+" or "-"
+end)
+
+-- Loop Auto Teleport
+spawn(function()
+    while task.wait(1) do
+        if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
+            teleportTo(teleportPoints.point1)
+            wait(delayTime)
+            teleportTo(teleportPoints.point2)
+        end
+    end
+end)
+
+-- Anti AFK
+for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
+
+-- Anti jatuh ke void
+RunService.Stepped:Connect(function()
+    local hrp = getHRP()
+    if hrp and not hrp.Anchored and hrp.Position.Y < -100 then
+        teleportTo(teleportPoints.point1 or Vector3.new(0, 50, 0))
+    end
+end)
+
+-- Respawn Fix
+player.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid").StateChanged:Connect(function(_, state)
+        if state == Enum.HumanoidStateType.Physics then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end
+    end)
 end)
 
 loadPoints()
