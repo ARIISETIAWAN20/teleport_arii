@@ -1,21 +1,19 @@
--- ✅ Arii Teleport GUI v2 (Key Protected + Anti Cheat + Anti Clip)
+-- ✅ Arii Teleport GUI v2 (Delta Mobile Compatible)
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local nameBypass = "supa_loi"
 local requiredKey = "OwnerAri"
 
--- Cegah environment detection (Bypass Sederhana)
 pcall(function()
     hookfunction(getgenv, function(...) return nil end)
     hookfunction(setreadonly, function(t, b) if b then return end end)
 end)
 
--- Jika bukan supa_loi maka tampilkan Menu Key
 if player.Name ~= nameBypass then
-    local CoreGui = game:GetService("CoreGui")
-    local keyGui = Instance.new("ScreenGui", CoreGui)
+    local keyGui = Instance.new("ScreenGui")
     keyGui.Name = "KeySystem"
+    keyGui.Parent = player:WaitForChild("PlayerGui")
 
     local frame = Instance.new("Frame", keyGui)
     frame.Size = UDim2.new(0, 200, 0, 100)
@@ -65,7 +63,6 @@ function loadArii()
     local autoTeleport = false
     local delayTime = 8
 
-    -- Anti Staff Lebih Kuat
     local blacklist = {
         ["mach383"] = true, ["ixNazzz"] = true, ["Evgeniy444444"] = true,
         ["legendxlenn"] = true, ["VicSimon8"] = true, ["Woodrowlvan_8"] = true,
@@ -87,14 +84,6 @@ function loadArii()
     end
     game.Players.PlayerAdded:Connect(kickIfBlacklisted)
     kickIfBlacklisted()
-
-    pcall(function()
-        for _,v in pairs(getnilinstances()) do
-            if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-                v:Destroy()
-            end
-        end
-    end)
 
     StarterGui:SetCore("SendNotification", {
         Title = "Arii GUI", Text = "Proteksi aktif ✔", Duration = 3
@@ -139,8 +128,10 @@ function loadArii()
     end
 
     -- UI
-    local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+    local gui = Instance.new("ScreenGui")
     gui.Name = "TeleportGUI"
+    gui.Parent = player:WaitForChild("PlayerGui")
+
     local MainFrame = Instance.new("Frame", gui)
     MainFrame.Size = UDim2.new(0, 145, 0, 180)
     MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
@@ -236,19 +227,19 @@ function loadArii()
         end
     end)
 
-    for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
+    pcall(function()
+        for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
+    end)
 
     RunService.Stepped:Connect(function()
         local hrp = getHRP()
         if hrp then
-            -- Anti Clip
             local touching = hrp:GetTouchingParts()
             for _, part in ipairs(touching) do
                 if part:IsA("BasePart") and part.CanCollide == false then
                     part.CanCollide = true
                 end
             end
-            -- Prevent jatuh cepat
             if not hrp.Anchored then
                 hrp.Velocity = Vector3.new(0, math.max(hrp.Velocity.Y, -50), 0)
             end
