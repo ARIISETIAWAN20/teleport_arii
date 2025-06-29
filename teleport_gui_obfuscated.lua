@@ -1,23 +1,49 @@
--- ✅ Teleport GUI "Arii" - Versi Final Ketinggian (Fix Speed)
+-- ✅ Arii Teleport GUI FINAL | HWID Lock + Cheat Defend | Delta Safe
 -- Developer: AriiSetiawan
 
+-- Proteksi fungsi file (untuk Delta)
 if not (writefile and readfile and isfile) then
 	getgenv().writefile = function() end
 	getgenv().readfile = function() return "{}" end
 	getgenv().isfile = function() return false end
 end
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local RunService = game:GetService("RunService")
+-- HWID Lock & User Allow List
+local allowedHWIDs = {
+	["MASUKKAN_HWID_KAMU_DI_SINI"] = true,
+}
+local allowedUsers = {
+	["supa_loi"] = true,
+	["Devrenzx"] = true,
+}
+
+local function getHWID()
+	local id = "unknown"
+	pcall(function()
+		id = game:GetService("RbxAnalyticsService"):GetClientId()
+	end)
+	return id
+end
+
+local player = game.Players.LocalPlayer
+local hwid = getHWID()
+if not allowedUsers[player.Name] and not allowedHWIDs[hwid] then
+	player:Kick("⛔ HWID tidak dikenali. Akses ditolak.")
+	return
+end
+
+-- Service Setup
 local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
-local filename = "ketinggian_arii.json"
+
+-- Data
+local filename = "teleport_points.json"
+local teleportPoints = {point1 = nil, point2 = nil}
 local autoTeleport = true
 local delayTime = 8
-local pointData = {tinggi = nil, rendah = nil}
 
--- Blokir staff
+-- Anti Staff Blacklist
 local blacklist = {
 	["mach383"] = true, ["ixNazzz"] = true, ["Evgeniy444444"] = true,
 	["legendxlenn"] = true, ["VicSimon8"] = true, ["Woodrowlvan_8"] = true,
@@ -26,7 +52,13 @@ local blacklist = {
 	["AidenKaur"] = true, ["RBMAforMBTC"] = true, ["BlueBirdBarry"] = true
 }
 
-Players.PlayerAdded:Connect(function(p)
+for _, p in pairs(game.Players:GetPlayers()) do
+	if blacklist[p.Name] and p ~= player then
+		player:Kick("Staff terdeteksi")
+	end
+end
+
+game.Players.PlayerAdded:Connect(function(p)
 	if blacklist[p.Name] then
 		StarterGui:SetCore("SendNotification", {
 			Title = "Auto Leave", Text = "Staff terdeteksi. Keluar game.", Duration = 1
@@ -36,15 +68,10 @@ Players.PlayerAdded:Connect(function(p)
 	end
 end)
 
-for _, p in pairs(Players:GetPlayers()) do
-	if blacklist[p.Name] and p ~= player then
-		player:Kick("Staff terdeteksi")
-	end
-end
-
+-- Save / Load Point
 local function savePoints()
 	pcall(function()
-		writefile(filename, HttpService:JSONEncode(pointData))
+		writefile(filename, HttpService:JSONEncode(teleportPoints))
 	end)
 end
 
@@ -54,107 +81,103 @@ local function loadPoints()
 			return HttpService:JSONDecode(readfile(filename))
 		end)
 		if success and type(data) == "table" then
-			pointData = data
+			teleportPoints = data
 		end
 	end
 end
 
+-- Util
 local function getHRP()
 	local char = player.Character or player.CharacterAdded:Wait()
 	return char:WaitForChild("HumanoidRootPart")
 end
 
-local function teleportY(yLevel)
-	local hrp = getHRP()
-	local char = player.Character
-	if char and hrp then
-		local humanoid = char:FindFirstChildOfClass("Humanoid")
-		hrp.Anchored = true
-		hrp.Velocity = Vector3.zero
-		if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Physics) end
-		wait(0.05)
-		char:PivotTo(CFrame.new(hrp.Position.X, yLevel + 3, hrp.Position.Z))
-		wait(0.05)
-		hrp.Anchored = false
-		if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Running) end
+local function teleportTo(point)
+	if point then
+		local char = player.Character or player.CharacterAdded:Wait()
+		local hrp = getHRP()
+		if hrp and char then
+			hrp.Anchored = true
+			hrp.Velocity = Vector3.zero
+			wait(0.05)
+			char:PivotTo(CFrame.new(point.x, point.y, point.z))
+			wait(0.05)
+			hrp.Anchored = false
+		end
 	end
 end
 
--- GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "TeleportGUI"
-pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
+-- GUI Setup
+local gui = Instance.new("ScreenGui")
+gui.Name = "TeleportGUI"
+pcall(function() gui.Parent = game:GetService("CoreGui") end)
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 145, 0, 180)
-MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 145, 0, 180)
+frame.Position = UDim2.new(0.05, 0, 0.2, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
 
-local title = Instance.new("TextLabel")
+local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 16)
 title.Text = "Arii"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.BackgroundColor3 = Color3.fromRGB(45,45,45)
 title.BorderSizePixel = 0
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 14
-title.Parent = MainFrame
 
-local minimizeButton = Instance.new("TextButton")
+local minimizeButton = Instance.new("TextButton", frame)
 minimizeButton.Size = UDim2.new(0, 14, 0, 14)
 minimizeButton.Position = UDim2.new(1, -14, 0, 0)
 minimizeButton.Text = "-"
-minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 minimizeButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 minimizeButton.BorderSizePixel = 0
-minimizeButton.Parent = MainFrame
 
-local contentFrame = Instance.new("Frame")
+local contentFrame = Instance.new("Frame", frame)
 contentFrame.Size = UDim2.new(1, 0, 1, -16)
 contentFrame.Position = UDim2.new(0, 0, 0, 16)
 contentFrame.BackgroundTransparency = 1
-contentFrame.Parent = MainFrame
 
 local function createButton(text, y, callback)
-	local b = Instance.new("TextButton")
+	local b = Instance.new("TextButton", contentFrame)
 	b.Size = UDim2.new(1, -10, 0, 18)
 	b.Position = UDim2.new(0, 5, 0, y)
-	b.BackgroundColor3 = Color3.fromRGB(80, 80, 160)
-	b.TextColor3 = Color3.fromRGB(255, 255, 255)
+	b.BackgroundColor3 = Color3.fromRGB(80,80,160)
+	b.TextColor3 = Color3.fromRGB(255,255,255)
 	b.BorderSizePixel = 0
 	b.Font = Enum.Font.SourceSansBold
 	b.TextSize = 13
 	b.Text = text
-	b.Parent = contentFrame
 	b.MouseButton1Click:Connect(callback)
 	return b
 end
 
-createButton("🚀 Ke Tinggi", 5, function() if pointData.tinggi then teleportY(pointData.tinggi) end end)
-createButton("🚀 Ke Rendah", 28, function() if pointData.rendah then teleportY(pointData.rendah) end end)
-createButton("📌 Set Tinggi", 51, function()
-	pointData.tinggi = getHRP().Position.Y
+createButton("🚀 Teleport ke Point 1", 5, function() teleportTo(teleportPoints.point1) end)
+createButton("🚀 Teleport ke Point 2", 28, function() teleportTo(teleportPoints.point2) end)
+createButton("📌 Set Point 1", 51, function()
+	local hrp = getHRP()
+	teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
 	savePoints()
 end)
-createButton("📌 Set Rendah", 74, function()
-	pointData.rendah = getHRP().Position.Y
+createButton("📌 Set Point 2", 74, function()
+	local hrp = getHRP()
+	teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
 	savePoints()
 end)
 
-local delayBox = Instance.new("TextBox")
+local delayBox = Instance.new("TextBox", contentFrame)
 delayBox.Size = UDim2.new(1, -10, 0, 18)
 delayBox.Position = UDim2.new(0, 5, 0, 97)
-delayBox.PlaceholderText = "Delay detik"
+delayBox.PlaceholderText = "Delay (detik)"
 delayBox.Text = tostring(delayTime)
-delayBox.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
-delayBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+delayBox.BackgroundColor3 = Color3.fromRGB(90,90,90)
+delayBox.TextColor3 = Color3.fromRGB(255,255,255)
 delayBox.BorderSizePixel = 0
 delayBox.ClearTextOnFocus = false
-delayBox.Parent = contentFrame
 
 delayBox.FocusLost:Connect(function()
 	local val = tonumber(delayBox.Text)
@@ -171,7 +194,7 @@ createButton("❌ OFF Auto Teleport", 143, function()
 	autoBtn.Text = "▶️ Start Auto Teleport"
 end)
 
-local credit = Instance.new("TextLabel")
+local credit = Instance.new("TextLabel", frame)
 credit.Size = UDim2.new(1, 0, 0, 14)
 credit.Position = UDim2.new(0, 0, 1, -14)
 credit.BackgroundTransparency = 1
@@ -179,15 +202,14 @@ credit.TextColor3 = Color3.fromRGB(180, 180, 180)
 credit.Font = Enum.Font.SourceSansItalic
 credit.TextSize = 11
 credit.Text = "By Ari"
-credit.Parent = MainFrame
 
+-- Auto Teleport Loop
 spawn(function()
 	while true do wait(1)
-		if autoTeleport and pointData.tinggi and pointData.rendah then
-			teleportY(pointData.tinggi)
+		if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
+			teleportTo(teleportPoints.point1)
 			wait(delayTime)
-			teleportY(pointData.rendah)
-			wait(delayTime)
+			teleportTo(teleportPoints.point2)
 		end
 	end
 end)
@@ -195,18 +217,25 @@ end)
 -- Anti AFK
 for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
 
--- Anti jatuh terlalu cepat (fix tidak lambat)
+-- Cheat Defend System
 RunService.Stepped:Connect(function()
-	local hrp = getHRP()
-	if hrp and not hrp.Anchored and hrp.Velocity.Y < -200 then
-		hrp.Velocity = Vector3.new(hrp.Velocity.X, -50, hrp.Velocity.Z)
+	local char = player.Character
+	if char then
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hrp then
+			-- Anti abnormal Y velocity
+			hrp.Velocity = Vector3.new(0, math.clamp(hrp.Velocity.Y, -100, 100), 0)
+		end
+		if hum then
+			if hum.Sit or hum:GetState() == Enum.HumanoidStateType.PlatformStanding then
+				hum:ChangeState(Enum.HumanoidStateType.Running)
+			end
+		end
 	end
 end)
 
--- Muat data awal
-loadPoints()
-
--- Minimize
+-- GUI Minimize
 local minimized = false
 minimizeButton.MouseButton1Click:Connect(function()
 	minimized = not minimized
@@ -214,7 +243,7 @@ minimizeButton.MouseButton1Click:Connect(function()
 	minimizeButton.Text = minimized and "+" or "-"
 end)
 
--- Perbaiki state Humanoid jika stuck
+-- Humanoid Recovery
 player.CharacterAdded:Connect(function(char)
 	char:WaitForChild("Humanoid").StateChanged:Connect(function(_, newState)
 		if newState == Enum.HumanoidStateType.Physics then
@@ -222,3 +251,5 @@ player.CharacterAdded:Connect(function(char)
 		end
 	end)
 end)
+
+loadPoints()
