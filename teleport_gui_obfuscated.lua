@@ -1,11 +1,11 @@
--- ✅ Teleport GUI "Arii" versi final + Proteksi Lengkap + HWID Lock + Akun Aman + Minimize Fix + Anti Clip Sederhana
-
--- Proteksi Fungsi File (untuk Executor HP/Delta)
-if not (writefile and readfile and isfile) then
-    getgenv().writefile = function() end
-    getgenv().readfile = function() return "{}" end
-    getgenv().isfile = function() return false end
-end
+-- ✅ Teleport GUI "Arii" 
+pcall(function()
+    if not (writefile and readfile and isfile) then
+        getgenv().writefile = nil
+        getgenv().readfile = function() return "{}" end
+        getgenv().isfile = function() return false end
+    end
+end)
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -26,87 +26,70 @@ local blacklist = {
     ["AidenKaur"] = true, ["RBMAforMBTC"] = true, ["BlueBirdBarry"] = true
 }
 
--- Deep Scan + Auto Kick
 local function deepScan()
     for _, plr in pairs(Players:GetPlayers()) do
-        local name = plr.Name:lower()
-        local desc = plr:FindFirstChild("HumanoidDescription")
-        if blacklist[name] or (desc and tostring(desc):lower():find("moderator")) then
-            player:Kick("Staff / Moderasi terdeteksi")
+        if blacklist[plr.Name] then
+            player:Kick("Staff terdeteksi")
         end
     end
 end
 deepScan()
 Players.PlayerAdded:Connect(function(p)
+    wait(1)
     if blacklist[p.Name] then
         StarterGui:SetCore("SendNotification", {Title = "Auto Leave", Text = "Staff Terdeteksi", Duration = 1})
-        wait(2)
+        wait(1)
         player:Kick("Staff terdeteksi")
     end
-    wait(1)
-    deepScan()
 end)
 
-for _, p in pairs(Players:GetPlayers()) do
-    if blacklist[p.Name] and p ~= player then
-        player:Kick("Staff terdeteksi")
-    end
-end
-
--- Proteksi Lingkungan
+-- HWID Lock
 pcall(function()
-    for _,v in pairs(getnilinstances()) do
-        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-            v:Destroy()
-        end
-    end
-    hookfunction(getfenv, function(...) return {} end)
-    hookfunction(setfenv, function(...) return {} end)
-    hookfunction(getgenv, function(...) return {} end)
-    getgenv()._G = {}; getgenv().shared = {}
-end)
-StarterGui:SetCore("SendNotification", {
-    Title = "Anti Cheat", Text = "Proteksi aktif", Duration = 5
-})
-
--- HWID Lock + Nama Aman
-pcall(function()
-    local allowedHWID = "HWID_ARI_123" -- Ganti sesuai HWID kamu
+    local allowedHWID = "HWID_ARI_123"
     local allowedUsers = {["supa_loi"] = true, ["Devrenzx"] = true}
-    local function getHWID() return tostring(game:GetService("RbxAnalyticsService"):GetClientId()) end
+    local function getHWID()
+        local id = "UNKNOWN"
+        pcall(function()
+            id = tostring(game:GetService("RbxAnalyticsService"):GetClientId())
+        end)
+        return id
+    end
     if not allowedUsers[player.Name] and getHWID() ~= allowedHWID then
         player:Kick("Perangkat tidak diizinkan (HWID Lock)")
     end
 end)
 
--- Proteksi Remote Spoof
+-- Anti Remote Log/Report
 pcall(function()
     local mt = getrawmetatable(game)
     setreadonly(mt, false)
     local old = mt.__namecall
     mt.__namecall = newcclosure(function(self, ...)
-        if tostring(self):lower():find("log") or tostring(self):lower():find("report") then return nil end
+        if tostring(self):lower():find("log") or tostring(self):lower():find("report") then
+            return nil
+        end
         return old(self, ...)
     end)
 end)
 
--- Hapus Signature
-pcall(function()
-    for k, v in pairs(getgenv()) do
-        if typeof(v) == "string" and v:lower():find("ari") then getgenv()[k] = nil end
-    end
-end)
-
--- Fungsi Load/Save Point
+-- Load/Save Points
 local function loadPoints()
-    if isfile(filename) then
-        local ok, data = pcall(function() return HttpService:JSONDecode(readfile(filename)) end)
-        if ok and type(data) == "table" then teleportPoints = data end
+    if isfile and isfile(filename) then
+        local success, data = pcall(function()
+            return HttpService:JSONDecode(readfile(filename))
+        end)
+        if success and type(data) == "table" then
+            teleportPoints = data
+        end
     end
 end
 
 local function savePoints()
-    pcall(function() writefile(filename, HttpService:JSONEncode(teleportPoints)) end)
+    if writefile then
+        pcall(function()
+            writefile(filename, HttpService:JSONEncode(teleportPoints))
+        end)
+    end
 end
 
 local function getHRP()
@@ -134,6 +117,9 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "TeleportGUI"
 pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
+if not ScreenGui.Parent then
+    ScreenGui.Parent = player:WaitForChild("PlayerGui")
+end
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 145, 0, 180)
@@ -229,15 +215,12 @@ credit.TextSize = 11
 credit.Text = "By Ari"
 credit.Parent = MainFrame
 
--- Minimize Toggle
-local minimized = false
 minimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    contentFrame.Visible = not minimized
-    minimizeButton.Text = minimized and "+" or "-"
+    contentFrame.Visible = not contentFrame.Visible
+    minimizeButton.Text = contentFrame.Visible and "-" or "+"
 end)
 
--- Auto Teleport Loop
+-- Auto Teleport
 spawn(function()
     while task.wait(1) do
         if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
@@ -251,7 +234,7 @@ end)
 -- Anti Idle
 for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
 
--- Anti Clip Sederhana (jatuh ke bawah)
+-- Anti Clip (Jatuh)
 RunService.Stepped:Connect(function()
     local hrp = getHRP()
     if hrp and not hrp.Anchored then
@@ -261,14 +244,5 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Respawn Unstuck
-player.CharacterAdded:Connect(function(char)
-    char:WaitForChild("Humanoid").StateChanged:Connect(function(_, newState)
-        if newState == Enum.HumanoidStateType.Physics then
-            char.Humanoid:ChangeState(Enum.HumanoidStateType.Running)
-        end
-    end)
-end)
-
--- Load point dari file
+-- Load Point
 loadPoints()
