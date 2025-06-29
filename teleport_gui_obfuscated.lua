@@ -1,5 +1,4 @@
--- ✅ Teleport GUI "Arii" - Versi Final Ketinggian
--- Fitur: GUI Gabungan, Auto Teleport Tinggi ⇌ Rendah, Anti Staff, Anti Cheat, Auto Save, Anti AFK
+-- ✅ Teleport GUI "Arii" - Versi Final Ketinggian (Fix Speed)
 -- Developer: AriiSetiawan
 
 if not (writefile and readfile and isfile) then
@@ -16,7 +15,6 @@ local StarterGui = game:GetService("StarterGui")
 local filename = "ketinggian_arii.json"
 local autoTeleport = true
 local delayTime = 8
-
 local pointData = {tinggi = nil, rendah = nil}
 
 -- Blokir staff
@@ -44,7 +42,6 @@ for _, p in pairs(Players:GetPlayers()) do
 	end
 end
 
--- Save/load posisi
 local function savePoints()
 	pcall(function()
 		writefile(filename, HttpService:JSONEncode(pointData))
@@ -195,17 +192,21 @@ spawn(function()
 	end
 end)
 
+-- Anti AFK
 for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
 
+-- Anti jatuh terlalu cepat (fix tidak lambat)
 RunService.Stepped:Connect(function()
 	local hrp = getHRP()
-	if hrp and not hrp.Anchored then
-		hrp.Velocity = Vector3.new(0, math.max(hrp.Velocity.Y, -50), 0)
+	if hrp and not hrp.Anchored and hrp.Velocity.Y < -200 then
+		hrp.Velocity = Vector3.new(hrp.Velocity.X, -50, hrp.Velocity.Z)
 	end
 end)
 
+-- Muat data awal
 loadPoints()
 
+-- Minimize
 local minimized = false
 minimizeButton.MouseButton1Click:Connect(function()
 	minimized = not minimized
@@ -213,6 +214,7 @@ minimizeButton.MouseButton1Click:Connect(function()
 	minimizeButton.Text = minimized and "+" or "-"
 end)
 
+-- Perbaiki state Humanoid jika stuck
 player.CharacterAdded:Connect(function(char)
 	char:WaitForChild("Humanoid").StateChanged:Connect(function(_, newState)
 		if newState == Enum.HumanoidStateType.Physics then
