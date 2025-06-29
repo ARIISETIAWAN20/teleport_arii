@@ -16,7 +16,7 @@ local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 
 local filename = "teleport_points.json"
-local teleportPoints = {point1 = nil, point2 = nil, speed1 = 1.5, speed2 = 1.5}
+local teleportPoints = {point1 = nil, point2 = nil}
 local autoTeleport = false
 local delayTime = 8
 
@@ -89,8 +89,6 @@ local function loadPoints()
             teleportPoints = data
         end
     end
-    teleportPoints.speed1 = teleportPoints.speed1 or 1.5
-    teleportPoints.speed2 = teleportPoints.speed2 or 1.5
 end
 
 local function savePoints()
@@ -211,39 +209,6 @@ local function createButton(text, callback)
     return b
 end
 
-local function createSlider(titleText, defaultVal, callback)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 16)
-    label.Text = titleText
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 11
-    label.TextColor3 = Color3.fromRGB(200, 200, 200)
-    label.Parent = contentFrame
-
-    local box = Instance.new("TextBox")
-    box.Size = UDim2.new(1, 0, 0, 20)
-    box.Text = tostring(defaultVal)
-    box.ClearTextOnFocus = false
-    box.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    box.TextColor3 = Color3.fromRGB(255, 255, 255)
-    box.Font = Enum.Font.Gotham
-    box.TextSize = 12
-    box.Parent = contentFrame
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
-
-    box.FocusLost:Connect(function()
-        task.wait(0.1)
-        local val = tonumber(box.Text)
-        if val and val > 0 and val <= 10 then
-            callback(val)
-            savePoints()
-        else
-            box.Text = tostring(defaultVal)
-        end
-    end)
-end
-
 createButton("🚀 Teleport to Point 1", function() teleportTo(teleportPoints.point1) end)
 createButton("🚀 Teleport to Point 2", function() teleportTo(teleportPoints.point2) end)
 createButton("📌 Set Point 1", function()
@@ -256,9 +221,6 @@ createButton("📌 Set Point 2", function()
     teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
     savePoints()
 end)
-
-createSlider("⏩ Delay Speed Point 1 (1-10)", teleportPoints.speed1, function(v) teleportPoints.speed1 = v end)
-createSlider("⏩ Delay Speed Point 2 (1-10)", teleportPoints.speed2, function(v) teleportPoints.speed2 = v end)
 
 local delayBox = Instance.new("TextBox")
 delayBox.Size = UDim2.new(1, 0, 0, 20)
@@ -298,6 +260,11 @@ credit.Parent = MainFrame
 
 minimizeButton.MouseButton1Click:Connect(function()
     contentFrame.Visible = not contentFrame.Visible
+    for _, v in pairs(contentFrame:GetChildren()) do
+        if v:IsA("TextButton") or v:IsA("TextBox") or v:IsA("TextLabel") then
+            v.Visible = contentFrame.Visible
+        end
+    end
     minimizeButton.Text = contentFrame.Visible and "-" or "+"
 end)
 
@@ -306,9 +273,9 @@ spawn(function()
     while task.wait(1) do
         if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
             teleportTo(teleportPoints.point1)
-            wait(teleportPoints.speed1 or 1.5)
+            wait(delayTime)
             teleportTo(teleportPoints.point2)
-            wait(teleportPoints.speed2 or 1.5)
+            wait(delayTime)
         end
     end
 end)
