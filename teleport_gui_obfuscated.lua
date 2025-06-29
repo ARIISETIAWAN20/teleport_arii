@@ -1,4 +1,4 @@
--- ✅ Teleport GUI "Arii" - FINAL DELTA SAFE + Auto Save Posisi Terakhir
+-- ✅ Teleport GUI "Arii" - FINAL DELTA SAFE + Auto Save Posisi Terakhir + GUI Fix Mobile
 
 -- Proteksi Fungsi File (Delta Friendly)
 pcall(function()
@@ -19,7 +19,7 @@ local filename = "teleport_points.json"
 local teleportPoints = {
     point1 = nil,
     point2 = nil,
-    last = nil -- ⬅️ Auto Save Posisi Terakhir
+    last = nil
 }
 local autoTeleport = false
 local delayTime = 8
@@ -42,7 +42,7 @@ pcall(function()
             Duration = 5
         })
         task.wait(1.5)
-        pcall(function() player:Kick("HWID tidak terdaftar.") end)
+        player:Kick("HWID tidak terdaftar.")
     end
 end)
 
@@ -63,7 +63,6 @@ local function isSuspiciousUser(p)
     end
     return p.AccountAge > 200 and p.MembershipType == Enum.MembershipType.Premium
 end
-
 local function scanPlayers()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and (blacklist[p.Name] or isSuspiciousUser(p)) then
@@ -73,11 +72,10 @@ local function scanPlayers()
                 Duration = 4
             })
             task.wait(1)
-            pcall(function() player:Kick("Deep Scan: Staff/Observer Detected") end)
+            player:Kick("Deep Scan: Staff/Observer Detected")
         end
     end
 end
-
 Players.PlayerAdded:Connect(scanPlayers)
 Players.PlayerRemoving:Connect(scanPlayers)
 task.spawn(function()
@@ -104,11 +102,9 @@ local function loadPoints()
         if success and type(data) == "table" then teleportPoints = data end
     end
 end
-
 local function savePoints()
     pcall(function() writefile(filename, HttpService:JSONEncode(teleportPoints)) end)
 end
-
 local function getHRP()
     local char = player.Character or player.CharacterAdded:Wait()
     return char:WaitForChild("HumanoidRootPart")
@@ -139,106 +135,113 @@ local function teleportTo(point)
     end
 end
 
--- GUI (Delta Safe)
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,145,0,195)
-frame.Position = UDim2.new(0.05,0,0.2,0)
-frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-frame.Active = true
-frame.Draggable = true
+-- GUI (Delta Friendly)
+task.defer(function()
+    task.wait(1)
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "AriiTeleportGUI"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = player:WaitForChild("PlayerGui")
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1,0,0,16)
-title.Text = "Arii"
-title.TextColor3 = Color3.new(1,1,1)
-title.BackgroundColor3 = Color3.fromRGB(45,45,45)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 14
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(0,145,0,195)
+    frame.Position = UDim2.new(0.05,0,0.2,0)
+    frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    frame.Active = true
+    frame.Draggable = true
 
-local minimize = Instance.new("TextButton", frame)
-minimize.Size = UDim2.new(0,14,0,14)
-minimize.Position = UDim2.new(1,-14,0,0)
-minimize.Text = "-"
-minimize.TextColor3 = Color3.new(1,1,1)
-minimize.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1,0,0,16)
+    title.Text = "Arii"
+    title.TextColor3 = Color3.new(1,1,1)
+    title.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    title.Font = Enum.Font.SourceSansBold
+    title.TextSize = 14
 
-local content = Instance.new("Frame", frame)
-content.Size = UDim2.new(1,0,1,-16)
-content.Position = UDim2.new(0,0,0,16)
-content.BackgroundTransparency = 1
+    local minimize = Instance.new("TextButton", frame)
+    minimize.Size = UDim2.new(0,14,0,14)
+    minimize.Position = UDim2.new(1,-14,0,0)
+    minimize.Text = "-"
+    minimize.TextColor3 = Color3.new(1,1,1)
+    minimize.BackgroundColor3 = Color3.fromRGB(70,70,70)
 
-local function button(text, y, callback)
-    local b = Instance.new("TextButton", content)
-    b.Size = UDim2.new(1,-10,0,18)
-    b.Position = UDim2.new(0,5,0,y)
-    b.BackgroundColor3 = Color3.fromRGB(80,80,160)
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.SourceSansBold
-    b.TextSize = 13
-    b.Text = text
-    b.MouseButton1Click:Connect(callback)
-    return b
-end
+    local content = Instance.new("Frame", frame)
+    content.Size = UDim2.new(1,0,1,-16)
+    content.Position = UDim2.new(0,0,0,16)
+    content.BackgroundTransparency = 1
 
-button("🚀 Teleport to Point 1", 5, function() teleportTo(teleportPoints.point1) end)
-button("🚀 Teleport to Point 2", 28, function() teleportTo(teleportPoints.point2) end)
-button("📌 Set Point 1", 51, function()
-    local hrp = getHRP()
-    teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
-    savePoints()
+    local function button(text, y, callback)
+        local b = Instance.new("TextButton", content)
+        b.Size = UDim2.new(1,-10,0,18)
+        b.Position = UDim2.new(0,5,0,y)
+        b.BackgroundColor3 = Color3.fromRGB(80,80,160)
+        b.TextColor3 = Color3.new(1,1,1)
+        b.Font = Enum.Font.SourceSansBold
+        b.TextSize = 13
+        b.Text = text
+        b.MouseButton1Click:Connect(callback)
+        return b
+    end
+
+    button("🚀 Teleport to Point 1", 5, function() teleportTo(teleportPoints.point1) end)
+    button("🚀 Teleport to Point 2", 28, function() teleportTo(teleportPoints.point2) end)
+    button("📌 Set Point 1", 51, function()
+        local hrp = getHRP()
+        teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+        savePoints()
+    end)
+    button("📌 Set Point 2", 74, function()
+        local hrp = getHRP()
+        teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+        savePoints()
+    end)
+
+    local delayBox = Instance.new("TextBox", content)
+    delayBox.Size = UDim2.new(1,-10,0,18)
+    delayBox.Position = UDim2.new(0,5,0,97)
+    delayBox.PlaceholderText = "Delay detik"
+    delayBox.Text = tostring(delayTime)
+    delayBox.BackgroundColor3 = Color3.fromRGB(90,90,90)
+    delayBox.TextColor3 = Color3.new(1,1,1)
+    delayBox.ClearTextOnFocus = false
+    delayBox.FocusLost:Connect(function()
+        local val = tonumber(delayBox.Text)
+        if val and val > 0 then delayTime = val end
+    end)
+
+    local autoBtn
+    autoBtn = button("▶️ Start Auto Teleport", 120, function()
+        autoTeleport = not autoTeleport
+        autoBtn.Text = autoTeleport and "⏹ Stop Auto Teleport" or "▶️ Start Auto Teleport"
+    end)
+    button("❌ OFF Auto Teleport", 143, function()
+        autoTeleport = false
+        autoBtn.Text = "▶️ Start Auto Teleport"
+    end)
+    button("📦 Teleport to Last Pos", 166, function()
+        teleportTo(teleportPoints.last)
+    end)
+
+    local credit = Instance.new("TextLabel", frame)
+    credit.Size = UDim2.new(1,0,0,14)
+    credit.Position = UDim2.new(0,0,1,-14)
+    credit.BackgroundTransparency = 1
+    credit.TextColor3 = Color3.fromRGB(180,180,180)
+    credit.Font = Enum.Font.SourceSansItalic
+    credit.TextSize = 11
+    credit.Text = "By Ari"
+
+    local minimized = false
+    minimize.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        content.Visible = not minimized
+        minimize.Text = minimized and "+" or "-"
+    end)
 end)
-button("📌 Set Point 2", 74, function()
-    local hrp = getHRP()
-    teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
-    savePoints()
-end)
 
-local delayBox = Instance.new("TextBox", content)
-delayBox.Size = UDim2.new(1,-10,0,18)
-delayBox.Position = UDim2.new(0,5,0,97)
-delayBox.PlaceholderText = "Delay detik"
-delayBox.Text = tostring(delayTime)
-delayBox.BackgroundColor3 = Color3.fromRGB(90,90,90)
-delayBox.TextColor3 = Color3.new(1,1,1)
-delayBox.ClearTextOnFocus = false
-delayBox.FocusLost:Connect(function()
-    local val = tonumber(delayBox.Text)
-    if val and val > 0 then delayTime = val end
-end)
-
-local autoBtn = button("▶️ Start Auto Teleport", 120, function()
-    autoTeleport = not autoTeleport
-    autoBtn.Text = autoTeleport and "⏹ Stop Auto Teleport" or "▶️ Start Auto Teleport"
-end)
-
-button("❌ OFF Auto Teleport", 143, function()
-    autoTeleport = false
-    autoBtn.Text = "▶️ Start Auto Teleport"
-end)
-
-button("📦 Teleport to Last Pos", 166, function()
-    teleportTo(teleportPoints.last)
-end)
-
-local credit = Instance.new("TextLabel", frame)
-credit.Size = UDim2.new(1,0,0,14)
-credit.Position = UDim2.new(0,0,1,-14)
-credit.BackgroundTransparency = 1
-credit.TextColor3 = Color3.fromRGB(180,180,180)
-credit.Font = Enum.Font.SourceSansItalic
-credit.TextSize = 11
-credit.Text = "By Ari"
-
--- Minimize UI
-local minimized = false
-minimize.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    content.Visible = not minimized
-    minimize.Text = minimized and "+" or "-"
-end)
-
--- Auto Teleport
+-- Auto Teleport Loop
 task.spawn(function()
     while true do
         task.wait(1)
@@ -250,7 +253,7 @@ task.spawn(function()
     end
 end)
 
--- Proteksi jatuh
+-- Proteksi Jatuh
 RunService.Stepped:Connect(function()
     local hrp = getHRP()
     if hrp and not hrp.Anchored then
@@ -258,9 +261,10 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Auto Save Saat Keluar
+-- Simpan Posisi Saat Keluar
 game:BindToClose(function()
     saveLastPosition()
 end)
 
+-- Muat Data
 loadPoints()
