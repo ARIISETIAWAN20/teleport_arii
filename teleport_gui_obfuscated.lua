@@ -4,24 +4,35 @@
 local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 local function decode(data)
     data = string.gsub(data, '[^'..b..'=]', '')
-    return (data:gsub('.', function(x)
-        if x == '=' then return '' end
-        local r, f = '', (b:find(x) - 1)
-        for i = 6, 1, -1 do
-            r = r .. (f % 2^i - f % 2^(i-1) > 0 and '1' or '0')
+    local bits = ''
+    for i = 1, #data do
+        local c = data:sub(i,i)
+        if c ~= '=' then
+            local f = b:find(c) - 1
+            for j = 6, 1, -1 do
+                bits = bits .. (f % 2^j - f % 2^(j-1) > 0 and '1' or '0')
+            end
         end
-        return string.char(tonumber(r, 2))
-    end))
+    end
+    local decoded = ''
+    for i = 1, #bits-7, 8 do
+        local byte = bits:sub(i, i+7)
+        decoded = decoded .. string.char(tonumber(byte, 2))
+    end
+    return decoded
 end
 
--- Script Utama (full obfuscated + dilindungi) dalam Base64
-local encoded = [[
-bG9jYWwgX0VOVl9TRUVEID0gZnVuY3Rpb24oKQogICAgbG9jYWwgX0dfPWdldGZlbnYgYW5kIGdldGZlbnYoMSkgb3IgX0VOViBvciB7fQogICAgbG9jYWwgb2JmID0ge30KICAgIGZvciBrLHYgaW4gcGFpcnMoX0dfKSBkbyBvYmZba109diBlbmQKICAgIHJldHVybiBzZXRtZXRhdGFibGUoe30sIHtfaW5kZXg9b2JmfSkKZW5kCgpsb2NhbCBfMFhBID0gX0VOVl9TRUVEKCkKbG9jYWwgXzB4QiA9IGZ1bmN0aW9uKC4uLikgcmV0dXJuIC4uLiBlbmQKbG9jYWwgXzB4QyA9IHNldG1ldGF0YWJsZSh7fSwge19pbmRleD1mdW5jdGlvbihfLGspIHJldHVybiBmdW5jdGlvb... (truncated)
-]]
+-- Script Arii versi Base64 (Delta Mobile Safe)
+local encoded = [[{{BASE64_SCRIPT}}]]
 
 -- Proteksi Fungsi File untuk Delta Executor
-loadstring(decode([[YQBwAGMAYQBsACgAZgB1AG4AYwB0AGkAbwBuACgAKQAKCWkAZgAgAG4AbwB0ACAAKAB3AHIAaQB0AGUAZgBpAGwAZQAgAGEAbgBkACAAcgBlAGEAZABmAGkAbABlACAAYQBuAGQAIABpAHMAZgBpAGwAZQApACAAdABoAGUAbgAKCQBnAGUAdABnAGUAbgB2ACgpLndyaXRlZmlsZSA9IGZ1bmN0aW9uKCkgZW5kCgkJZ2V0Z2VudigpLnJlYWRmaWxlID0gZnVuY3Rpb24oKSB...
+pcall(function()
+    if not (writefile and readfile and isfile) then
+        getgenv().writefile = function() end
+        getgenv().readfile = function() return "{}" end
+        getgenv().isfile = function() return false end
+    end
+end)
 
-
--- Eksekusi Script Obfuscated
+-- Eksekusi Script
 loadstring(decode(encoded))()
