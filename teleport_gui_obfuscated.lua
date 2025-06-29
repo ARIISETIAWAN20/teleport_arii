@@ -1,4 +1,4 @@
--- ✅ Teleport GUI "Arii" - FINAL DELTA SAFE + Auto Save Posisi Terakhir + GUI Fix Mobile
+-- ✅ Teleport GUI "Arii" - FINAL DELTA SAFE + Auto Save Posisi Terakhir + GUI Fix Mobile + Lightning Effect
 
 -- Proteksi Fungsi File (Delta Friendly)
 pcall(function()
@@ -14,6 +14,7 @@ local player = Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
 local filename = "teleport_points.json"
 
 local teleportPoints = {
@@ -135,6 +136,24 @@ local function teleportTo(point)
     end
 end
 
+-- Efek Petir
+local function lightningEffect()
+    local part = Instance.new("Part")
+    part.Anchored = true
+    part.CanCollide = false
+    part.Size = Vector3.new(1,20,1)
+    part.BrickColor = BrickColor.new("Institutional white")
+    part.Material = Enum.Material.Neon
+    part.CFrame = getHRP().CFrame * CFrame.new(0, 10, 0)
+    part.Parent = workspace
+
+    local tween = TweenService:Create(part, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1, Size = Vector3.new(0.5, 40, 0.5)})
+    tween:Play()
+    tween.Completed:Connect(function()
+        part:Destroy()
+    end)
+end
+
 -- GUI (Delta Friendly)
 task.defer(function()
     task.wait(1)
@@ -154,7 +173,7 @@ task.defer(function()
 
     local title = Instance.new("TextLabel", frame)
     title.Size = UDim2.new(1,0,0,16)
-    title.Text = "Arii"
+    title.Text = "Sc Project"
     title.TextColor3 = Color3.new(1,1,1)
     title.BackgroundColor3 = Color3.fromRGB(45,45,45)
     title.Font = Enum.Font.SourceSansBold
@@ -181,7 +200,10 @@ task.defer(function()
         b.Font = Enum.Font.SourceSansBold
         b.TextSize = 13
         b.Text = text
-        b.MouseButton1Click:Connect(callback)
+        b.MouseButton1Click:Connect(function()
+            lightningEffect()
+            callback()
+        end)
         return b
     end
 
@@ -223,15 +245,6 @@ task.defer(function()
     button("📦 Teleport to Last Pos", 166, function()
         teleportTo(teleportPoints.last)
     end)
-
-    local credit = Instance.new("TextLabel", frame)
-    credit.Size = UDim2.new(1,0,0,14)
-    credit.Position = UDim2.new(0,0,1,-14)
-    credit.BackgroundTransparency = 1
-    credit.TextColor3 = Color3.fromRGB(180,180,180)
-    credit.Font = Enum.Font.SourceSansItalic
-    credit.TextSize = 11
-    credit.Text = "By Ari"
 
     local minimized = false
     minimize.MouseButton1Click:Connect(function()
