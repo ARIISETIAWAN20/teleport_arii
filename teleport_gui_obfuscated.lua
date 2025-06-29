@@ -199,7 +199,7 @@ end)
 game:BindToClose(function() saveLastPosition() end)
 loadPoints()
 
--- GUI akan diimpor ke dokumen setelah ini jika belum lengkap
+-- Notifikasi Aktif
 StarterGui:SetCore("SendNotification", {
     Title = "Teleport GUI Arii Final",
     Text = "✅ Semua sistem terpasang dan aktif",
