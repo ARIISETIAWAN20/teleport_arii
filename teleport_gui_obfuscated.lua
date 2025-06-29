@@ -1,5 +1,4 @@
--- ✅ Teleport GUI "Arii" - FINAL DELTA SAFE v2.0
--- Kompatibel Delta Executor | Lengkap Fitur: GUI + Proteksi + Efek Petir + Deep Scan + Auto Save + Auto Teleport
+-- ✅ Teleport GUI "Arii" - FINAL DELTA SAFE + Auto Save Posisi Terakhir + GUI Fix Mobile + Lightning Effect
 
 -- Proteksi Fungsi File (Delta Friendly)
 pcall(function()
@@ -16,39 +15,63 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
-local Workspace = game:GetService("Workspace")
-local CoreGui = game:GetService("CoreGui")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local filename = "teleport_points.json"
-local teleportPoints = { point1 = nil, point2 = nil, last = nil }
+
+local teleportPoints = {
+    point1 = nil,
+    point2 = nil,
+    last = nil
+}
 local autoTeleport = false
 local delayTime = 8
 
 -- HWID Lock & Whitelist
-local allowedHWIDs = { ["abc123"] = true, ["xyz789"] = true }
-local whitelistUser = { ["supa_loi"] = true, ["Devrenzx"] = true }
+local allowedHWIDs = {
+    ["abc123"] = true,
+    ["xyz789"] = true,
+}
+local whitelistUser = {
+    ["supa_loi"] = true,
+    ["Devrenzx"] = true
+}
 pcall(function()
     local hwid = tostring(game:GetService("RbxAnalyticsService"):GetClientId()):gsub("-", ""):lower()
     if not allowedHWIDs[hwid] and not whitelistUser[player.Name] then
-        StarterGui:SetCore("SendNotification", { Title = "Blokir Akses", Text = "HWID tidak dikenali.", Duration = 5 })
+        StarterGui:SetCore("SendNotification", {
+            Title = "Blokir Akses",
+            Text = "HWID tidak dikenali.",
+            Duration = 5
+        })
         task.wait(1.5)
         player:Kick("HWID tidak terdaftar.")
     end
 end)
 
--- Deep Scan Staff / Admin
-local blacklist = { ["mach383"] = true, ["ixNazzz"] = true, ["Evgeniy444444"] = true, ["legendxlenn"] = true, ["VicSimon8"] = true }
-local suspiciousKeywords = {"mod", "staff", "admin", "check", "spectate", "inspect"}
+-- Blacklist & Deep Scan
+local blacklist = {
+    ["mach383"] = true, ["ixNazzz"] = true, ["Evgeniy444444"] = true,
+    ["legendxlenn"] = true, ["VicSimon8"] = true, ["Woodrowlvan_8"] = true,
+    ["Chase02771"] = true, ["Crystalst1402"] = true, ["CoryOdom_8"] = true,
+    ["AubreyPigou"] = true, ["GlennOsborne"] = true, ["porcorossooo"] = true,
+    ["AidenKaur"] = true, ["RBMAforMBTC"] = true, ["BlueBirdBarry"] = true
+}
+local suspiciousKeywords = {"mod","staff","admin","check","spectate","inspect"}
 local function isSuspiciousUser(p)
-    local dn, un = (p.DisplayName or ""):lower(), p.Name:lower()
-    for _, word in ipairs(suspiciousKeywords) do if dn:find(word) or un:find(word) then return true end end
+    local dn = (p.DisplayName or ""):lower()
+    local un = p.Name:lower()
+    for _, word in ipairs(suspiciousKeywords) do
+        if dn:find(word) or un:find(word) then return true end
+    end
     return p.AccountAge > 200 and p.MembershipType == Enum.MembershipType.Premium
 end
 local function scanPlayers()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and (blacklist[p.Name] or isSuspiciousUser(p)) then
-            StarterGui:SetCore("SendNotification", { Title = "Deep Scan", Text = "Staff/Admin terdeteksi.", Duration = 4 })
+            StarterGui:SetCore("SendNotification", {
+                Title = "Deep Scan",
+                Text = "Staff terdeteksi.",
+                Duration = 4
+            })
             task.wait(1)
             player:Kick("Deep Scan: Staff/Observer Detected")
         end
@@ -56,80 +79,50 @@ local function scanPlayers()
 end
 Players.PlayerAdded:Connect(scanPlayers)
 Players.PlayerRemoving:Connect(scanPlayers)
-task.spawn(function() while true do scanPlayers() task.wait(10) end end)
-
--- Bypass Anti Cheat
-pcall(function()
-    Workspace.DescendantAdded:Connect(function(desc)
-        if desc:IsA("Camera") or desc:IsA("RemoteEvent") or desc:IsA("RemoteFunction") then
-            local name = desc.Name:lower()
-            if name:find("spectate") or name:find("spy") or name:find("view") then
-                desc:Destroy()
-                StarterGui:SetCore("SendNotification", {Title="Bypass", Text="Observer diblokir", Duration=4})
-            end
-        end
-    end)
-end)
-
-pcall(function()
-    local function blockCore(obj)
-        local n = obj.Name:lower()
-        if n:find("anti") or n:find("cheat") or n:find("admin") or n:find("track") then
-            obj:Destroy()
-            StarterGui:SetCore("SendNotification", {Title="Bypass", Text="Anti-Cheat module diblokir", Duration=3})
-        end
+task.spawn(function()
+    while true do
+        scanPlayers()
+        task.wait(10)
     end
-    for _, v in ipairs(CoreGui:GetChildren()) do blockCore(v) end
-    for _, v in ipairs(ReplicatedStorage:GetChildren()) do blockCore(v) end
-    CoreGui.ChildAdded:Connect(blockCore)
-    ReplicatedStorage.ChildAdded:Connect(blockCore)
-end)
-
-pcall(function()
-    local mt = getrawmetatable(game)
-    setreadonly(mt, false)
-    local old = mt.__namecall
-    mt.__namecall = newcclosure(function(self, ...)
-        local method = getnamecallmethod():lower()
-        local name = tostring(self):lower()
-        if name:find("report") or name:find("log") or name:find("check") then return nil end
-        return old(self, ...)
-    end)
 end)
 
 -- Anti AFK
 pcall(function()
     local vu = game:GetService("VirtualUser")
     player.Idled:Connect(function()
-        vu:Button2Down(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
         task.wait(1)
-        vu:Button2Up(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
     end)
 end)
 
--- Teleport & Save
+-- Load & Save Point
+local function loadPoints()
+    if isfile(filename) then
+        local success, data = pcall(function() return HttpService:JSONDecode(readfile(filename)) end)
+        if success and type(data) == "table" then teleportPoints = data end
+    end
+end
+local function savePoints()
+    pcall(function() writefile(filename, HttpService:JSONEncode(teleportPoints)) end)
+end
 local function getHRP()
     local char = player.Character or player.CharacterAdded:Wait()
     return char:WaitForChild("HumanoidRootPart")
 end
 
-local function savePoints()
-    pcall(function() writefile(filename, HttpService:JSONEncode(teleportPoints)) end)
-end
-
-local function loadPoints()
-    if isfile(filename) then
-        local ok, data = pcall(function() return HttpService:JSONDecode(readfile(filename)) end)
-        if ok and type(data) == "table" then teleportPoints = data end
-    end
-end
-
+-- Auto Simpan Posisi Terakhir
 local function saveLastPosition()
     local hrp = getHRP()
-    teleportPoints.last = { x = hrp.Position.X, y = hrp.Position.Y, z = hrp.Position.Z }
+    teleportPoints.last = {
+        x = hrp.Position.X,
+        y = hrp.Position.Y,
+        z = hrp.Position.Z
+    }
     savePoints()
 end
 
+-- Teleport Fungsi
 local function teleportTo(point)
     if point then
         saveLastPosition()
@@ -144,43 +137,121 @@ local function teleportTo(point)
 end
 
 -- Efek Petir
-local function lightningEffect(guiButton)
-    local absPos = guiButton.AbsolutePosition
-    local absSize = guiButton.AbsoluteSize
-    local center = Vector3.new(absPos.X + absSize.X/2, absPos.Y, 0)
+local function lightningEffect()
     local part = Instance.new("Part")
-    part.Anchored = true part.CanCollide = false part.Size = Vector3.new(1, 20, 1)
+    part.Anchored = true
+    part.CanCollide = false
+    part.Size = Vector3.new(1,20,1)
     part.BrickColor = BrickColor.new("Institutional white")
-    part.Material = Enum.Material.Neon part.Transparency = 0
-    part.CFrame = CFrame.new(Vector3.new(0, 10, 0)) part.Parent = workspace part.Name = "LightningEffect"
-    local cam = workspace.CurrentCamera
-    local unitRay = cam:ViewportPointToRay(center.X, center.Y)
-    part.CFrame = CFrame.new(unitRay.Origin + unitRay.Direction * 10)
+    part.Material = Enum.Material.Neon
+    part.CFrame = getHRP().CFrame * CFrame.new(0, 10, 0)
+    part.Parent = workspace
+
     local tween = TweenService:Create(part, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1, Size = Vector3.new(0.5, 40, 0.5)})
     tween:Play()
-    tween.Completed:Connect(function() part:Destroy() end)
+    tween.Completed:Connect(function()
+        part:Destroy()
+    end)
 end
 
--- Proteksi Jatuh + Auto Simpan
-RunService.Stepped:Connect(function()
-    local hrp = getHRP()
-    if hrp and not hrp.Anchored then
-        hrp.Velocity = Vector3.new(0, math.max(hrp.Velocity.Y, -50), 0)
-    end
-end)
+-- GUI (Delta Friendly)
+task.defer(function()
+    task.wait(1)
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "AriiTeleportGUI"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = player:WaitForChild("PlayerGui")
 
-task.spawn(function()
-    while true do
-        task.wait(2)
-        local hrp = getHRP()
-        local pos = hrp.Position
-        if teleportPoints.point1 and (Vector3.new(teleportPoints.point1.x, teleportPoints.point1.y, teleportPoints.point1.z) - pos).Magnitude > 5 then
-            teleportPoints.point1 = {x = pos.X, y = pos.Y, z = pos.Z} savePoints()
-        end
-        if teleportPoints.point2 and (Vector3.new(teleportPoints.point2.x, teleportPoints.point2.y, teleportPoints.point2.z) - pos).Magnitude > 5 then
-            teleportPoints.point2 = {x = pos.X, y = pos.Y, z = pos.Z} savePoints()
-        end
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(0,145,0,195)
+    frame.Position = UDim2.new(0.05,0,0.2,0)
+    frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    frame.Active = true
+    frame.Draggable = true
+
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1,0,0,16)
+    title.Text = "Sc Project"
+    title.TextColor3 = Color3.new(1,1,1)
+    title.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    title.Font = Enum.Font.SourceSansBold
+    title.TextSize = 14
+
+    local minimize = Instance.new("TextButton", frame)
+    minimize.Size = UDim2.new(0,14,0,14)
+    minimize.Position = UDim2.new(1,-14,0,0)
+    minimize.Text = "-"
+    minimize.TextColor3 = Color3.new(1,1,1)
+    minimize.BackgroundColor3 = Color3.fromRGB(70,70,70)
+
+    local content = Instance.new("Frame", frame)
+    content.Size = UDim2.new(1,0,1,-16)
+    content.Position = UDim2.new(0,0,0,16)
+    content.BackgroundTransparency = 1
+
+    local function button(text, y, callback)
+        local b = Instance.new("TextButton", content)
+        b.Size = UDim2.new(1,-10,0,18)
+        b.Position = UDim2.new(0,5,0,y)
+        b.BackgroundColor3 = Color3.fromRGB(80,80,160)
+        b.TextColor3 = Color3.new(1,1,1)
+        b.Font = Enum.Font.SourceSansBold
+        b.TextSize = 13
+        b.Text = text
+        b.MouseButton1Click:Connect(function()
+            lightningEffect()
+            callback()
+        end)
+        return b
     end
+
+    button("🚀 Teleport to Point 1", 5, function() teleportTo(teleportPoints.point1) end)
+    button("🚀 Teleport to Point 2", 28, function() teleportTo(teleportPoints.point2) end)
+    button("📌 Set Point 1", 51, function()
+        local hrp = getHRP()
+        teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+        savePoints()
+    end)
+    button("📌 Set Point 2", 74, function()
+        local hrp = getHRP()
+        teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+        savePoints()
+    end)
+
+    local delayBox = Instance.new("TextBox", content)
+    delayBox.Size = UDim2.new(1,-10,0,18)
+    delayBox.Position = UDim2.new(0,5,0,97)
+    delayBox.PlaceholderText = "Delay detik"
+    delayBox.Text = tostring(delayTime)
+    delayBox.BackgroundColor3 = Color3.fromRGB(90,90,90)
+    delayBox.TextColor3 = Color3.new(1,1,1)
+    delayBox.ClearTextOnFocus = false
+    delayBox.FocusLost:Connect(function()
+        local val = tonumber(delayBox.Text)
+        if val and val > 0 then delayTime = val end
+    end)
+
+    local autoBtn
+    autoBtn = button("▶️ Start Auto Teleport", 120, function()
+        autoTeleport = not autoTeleport
+        autoBtn.Text = autoTeleport and "⏹ Stop Auto Teleport" or "▶️ Start Auto Teleport"
+    end)
+    button("❌ OFF Auto Teleport", 143, function()
+        autoTeleport = false
+        autoBtn.Text = "▶️ Start Auto Teleport"
+    end)
+    button("📦 Teleport to Last Pos", 166, function()
+        teleportTo(teleportPoints.last)
+    end)
+
+    local minimized = false
+    minimize.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        content.Visible = not minimized
+        minimize.Text = minimized and "+" or "-"
+    end)
 end)
 
 -- Auto Teleport Loop
@@ -195,13 +266,18 @@ task.spawn(function()
     end
 end)
 
--- Simpan Saat Keluar
-game:BindToClose(function() saveLastPosition() end)
-loadPoints()
+-- Proteksi Jatuh
+RunService.Stepped:Connect(function()
+    local hrp = getHRP()
+    if hrp and not hrp.Anchored then
+        hrp.Velocity = Vector3.new(0, math.max(hrp.Velocity.Y, -50), 0)
+    end
+end)
 
--- Notifikasi Aktif
-StarterGui:SetCore("SendNotification", {
-    Title = "Teleport GUI Arii Final",
-    Text = "✅ Semua sistem terpasang dan aktif",
-    Duration = 4
-})
+-- Simpan Posisi Saat Keluar
+game:BindToClose(function()
+    saveLastPosition()
+end)
+
+-- Muat Data
+loadPoints()
