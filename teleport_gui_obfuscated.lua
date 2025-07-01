@@ -62,7 +62,7 @@ local StarterGui = game:GetService("StarterGui")
 
 -- Data & Setting
 local filename = "teleport_points.json"
-local teleportPoints = {point1 = nil, point2 = nil}
+local teleportPoints = {yHigh = nil, yLow = nil}
 local autoTeleport = true
 local delayTime = 8
 
@@ -126,18 +126,17 @@ local function getHRP()
     return char:WaitForChild("HumanoidRootPart")
 end
 
-local function teleportTo(point)
-    if point then
-        local char = player.Character or player.CharacterAdded:Wait()
-        local hrp = getHRP()
-        if hrp and char then
-            hrp.Anchored = true
-            hrp.Velocity = Vector3.zero
-            wait(0.05)
-            char:PivotTo(CFrame.new(point.x, point.y, point.z))
-            wait(0.05)
-            hrp.Anchored = false
-        end
+local function teleportToY(y)
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = getHRP()
+    if hrp and char and y then
+        hrp.Anchored = true
+        hrp.Velocity = Vector3.zero
+        wait(0.05)
+        local pos = hrp.Position
+        char:PivotTo(CFrame.new(pos.X, y, pos.Z))
+        wait(0.05)
+        hrp.Anchored = false
     end
 end
 
@@ -190,16 +189,14 @@ local function createButton(text, y, callback)
     return b
 end
 
-createButton("🚀 Teleport ke Point 1", 5, function() teleportTo(teleportPoints.point1) end)
-createButton("🚀 Teleport ke Point 2", 28, function() teleportTo(teleportPoints.point2) end)
-createButton("📌 Set Point 1", 51, function()
-    local hrp = getHRP()
-    teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+createButton("🚀 Teleport ke Titik Tinggi", 5, function() teleportToY(teleportPoints.yHigh) end)
+createButton("🚀 Teleport ke Titik Rendah", 28, function() teleportToY(teleportPoints.yLow) end)
+createButton("📌 Set Titik Tinggi", 51, function()
+    teleportPoints.yHigh = getHRP().Position.Y
     savePoints()
 end)
-createButton("📌 Set Point 2", 74, function()
-    local hrp = getHRP()
-    teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+createButton("📌 Set Titik Rendah", 74, function()
+    teleportPoints.yLow = getHRP().Position.Y
     savePoints()
 end)
 
@@ -227,13 +224,13 @@ createButton("❌ OFF Auto Teleport", 143, function()
     autoBtn.Text = "▶️ Start Auto Teleport"
 end)
 
--- Loop Auto Teleport
+-- Loop Auto Teleport Tinggi ↔ Rendah
 spawn(function()
     while true do wait(1)
-        if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
-            teleportTo(teleportPoints.point1)
+        if autoTeleport and teleportPoints.yHigh and teleportPoints.yLow then
+            teleportToY(teleportPoints.yHigh)
             wait(delayTime)
-            teleportTo(teleportPoints.point2)
+            teleportToY(teleportPoints.yLow)
         end
     end
 end)
@@ -276,4 +273,5 @@ player.CharacterAdded:Connect(function(char)
     end)
 end)
 
+-- ⬇️ Load titik tinggi/rendah terakhir
 loadPoints()
