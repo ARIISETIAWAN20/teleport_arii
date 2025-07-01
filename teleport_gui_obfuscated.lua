@@ -1,6 +1,9 @@
 -- ✅ Arii Teleport GUI FINAL | HWID Lock + Cheat Defend | Delta Safe
 -- Developer: AriiSetiawan
 
+-- Jalankan hanya di game Climb and Jump Tower
+if game.PlaceId ~= 13772394625 then return end
+
 -- Proteksi Fungsi File (Delta Friendly)
 if not (writefile and readfile and isfile) then
     getgenv().writefile = function() end
