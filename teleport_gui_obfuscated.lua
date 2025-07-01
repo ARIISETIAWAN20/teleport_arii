@@ -62,7 +62,7 @@ local StarterGui = game:GetService("StarterGui")
 
 -- Data & Setting
 local filename = "teleport_points.json"
-local teleportPoints = {high = nil, low = nil}
+local teleportPoints = {basePos = nil, yHigh = nil, yLow = nil}
 local autoTeleport = true
 local delayTime = 8
 
@@ -126,14 +126,15 @@ local function getHRP()
     return char:WaitForChild("HumanoidRootPart")
 end
 
-local function teleportTo(pos)
+local function teleportToY(y)
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = getHRP()
-    if hrp and char and pos then
+    if hrp and char and y and teleportPoints.basePos then
         hrp.Anchored = true
         hrp.Velocity = Vector3.zero
         wait(0.05)
-        char:PivotTo(CFrame.new(pos))
+        local pos = teleportPoints.basePos
+        char:PivotTo(CFrame.new(pos.X, y, pos.Z))
         wait(0.05)
         hrp.Anchored = false
     end
@@ -189,21 +190,35 @@ local function createButton(text, y, callback)
 end
 
 createButton("🚀 Teleport ke Titik Tinggi", 5, function()
-    if teleportPoints.high then teleportTo(teleportPoints.high) end
+    if teleportPoints.yHigh and teleportPoints.basePos then
+        teleportToY(teleportPoints.yHigh)
+    end
 end)
 
 createButton("🚀 Teleport ke Titik Rendah", 28, function()
-    if teleportPoints.low then teleportTo(teleportPoints.low) end
+    if teleportPoints.yLow and teleportPoints.basePos then
+        teleportToY(teleportPoints.yLow)
+    end
 end)
 
 createButton("📌 Set Titik Tinggi", 51, function()
-    teleportPoints.high = getHRP().Position
+    local pos = getHRP().Position
+    teleportPoints.basePos = Vector3.new(pos.X, 0, pos.Z)
+    teleportPoints.yHigh = pos.Y
     savePoints()
 end)
 
 createButton("📌 Set Titik Rendah", 74, function()
-    teleportPoints.low = getHRP().Position
-    savePoints()
+    if teleportPoints.basePos then
+        teleportPoints.yLow = getHRP().Position.Y
+        savePoints()
+    else
+        StarterGui:SetCore("SendNotification", {
+            Title = "Set Gagal",
+            Text = "Set Titik Tinggi dulu.",
+            Duration = 2
+        })
+    end
 end)
 
 local delayBox = Instance.new("TextBox", contentFrame)
@@ -231,18 +246,17 @@ createButton("❌ OFF Auto Teleport", 143, function()
 end)
 
 createButton("♻️ Reset Titik", 166, function()
-    teleportPoints.high = nil
-    teleportPoints.low = nil
+    teleportPoints = {basePos = nil, yHigh = nil, yLow = nil}
     savePoints()
 end)
 
--- Loop Auto Teleport Tinggi ↔ Rendah
+-- Loop Auto Teleport
 spawn(function()
     while true do wait(1)
-        if autoTeleport and teleportPoints.high and teleportPoints.low then
-            teleportTo(teleportPoints.high)
+        if autoTeleport and teleportPoints.yHigh and teleportPoints.yLow and teleportPoints.basePos then
+            teleportToY(teleportPoints.yHigh)
             wait(delayTime)
-            teleportTo(teleportPoints.low)
+            teleportToY(teleportPoints.yLow)
         end
     end
 end)
@@ -285,5 +299,5 @@ player.CharacterAdded:Connect(function(char)
     end)
 end)
 
--- Load titik
+-- Load Titik
 loadPoints()
