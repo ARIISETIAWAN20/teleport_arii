@@ -62,7 +62,7 @@ local StarterGui = game:GetService("StarterGui")
 
 -- Data & Setting
 local filename = "teleport_points.json"
-local teleportPoints = {yHigh = nil, yLow = nil}
+local teleportPoints = {high = nil, low = nil}
 local autoTeleport = true
 local delayTime = 8
 
@@ -126,15 +126,14 @@ local function getHRP()
     return char:WaitForChild("HumanoidRootPart")
 end
 
-local function teleportToY(y)
+local function teleportTo(pos)
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = getHRP()
-    if hrp and char and y then
+    if hrp and char and pos then
         hrp.Anchored = true
         hrp.Velocity = Vector3.zero
         wait(0.05)
-        local pos = hrp.Position
-        char:PivotTo(CFrame.new(pos.X, y, pos.Z))
+        char:PivotTo(CFrame.new(pos))
         wait(0.05)
         hrp.Anchored = false
     end
@@ -189,14 +188,21 @@ local function createButton(text, y, callback)
     return b
 end
 
-createButton("🚀 Teleport ke Titik Tinggi", 5, function() teleportToY(teleportPoints.yHigh) end)
-createButton("🚀 Teleport ke Titik Rendah", 28, function() teleportToY(teleportPoints.yLow) end)
+createButton("🚀 Teleport ke Titik Tinggi", 5, function()
+    if teleportPoints.high then teleportTo(teleportPoints.high) end
+end)
+
+createButton("🚀 Teleport ke Titik Rendah", 28, function()
+    if teleportPoints.low then teleportTo(teleportPoints.low) end
+end)
+
 createButton("📌 Set Titik Tinggi", 51, function()
-    teleportPoints.yHigh = getHRP().Position.Y
+    teleportPoints.high = getHRP().Position
     savePoints()
 end)
+
 createButton("📌 Set Titik Rendah", 74, function()
-    teleportPoints.yLow = getHRP().Position.Y
+    teleportPoints.low = getHRP().Position
     savePoints()
 end)
 
@@ -224,13 +230,19 @@ createButton("❌ OFF Auto Teleport", 143, function()
     autoBtn.Text = "▶️ Start Auto Teleport"
 end)
 
+createButton("♻️ Reset Titik", 166, function()
+    teleportPoints.high = nil
+    teleportPoints.low = nil
+    savePoints()
+end)
+
 -- Loop Auto Teleport Tinggi ↔ Rendah
 spawn(function()
     while true do wait(1)
-        if autoTeleport and teleportPoints.yHigh and teleportPoints.yLow then
-            teleportToY(teleportPoints.yHigh)
+        if autoTeleport and teleportPoints.high and teleportPoints.low then
+            teleportTo(teleportPoints.high)
             wait(delayTime)
-            teleportToY(teleportPoints.yLow)
+            teleportTo(teleportPoints.low)
         end
     end
 end)
@@ -273,5 +285,5 @@ player.CharacterAdded:Connect(function(char)
     end)
 end)
 
--- ⬇️ Load titik tinggi/rendah terakhir
+-- Load titik
 loadPoints()
