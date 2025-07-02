@@ -1,6 +1,11 @@
+
 -- ✅ Teleport GUI "Arii" versi gabungan dua UI
 -- Fitur: Teleport 2 titik, auto teleport, delay, anti cheat, anti staff, minimize
--- Tanpa: Auto Coin, Auto Wins, Auto Hatch
+-- Hanya untuk Climb and Jump Tower (Tokyo Tower)
+
+if game.PlaceId ~= 123921593837160 then
+    return warn("[Teleport GUI] Script hanya berjalan di Climb and Jump Tower (Tokyo Tower).")
+end
 
 if not (writefile and readfile and isfile) then
     getgenv().writefile = function() end
