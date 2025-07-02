@@ -198,13 +198,19 @@ createButton("❌ OFF Auto Teleport", 143, function()
     autoBtn.Text = "▶️ Start Auto Teleport"
 end)
 
--- Loop Auto Teleport
+-- ✅ Auto Teleport Bergantian Point 1 <-> Point 2
 spawn(function()
+    local currentPoint = 1
     while true do wait(1)
         if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
-            teleportTo(teleportPoints.point1)
+            if currentPoint == 1 then
+                teleportTo(teleportPoints.point1)
+                currentPoint = 2
+            else
+                teleportTo(teleportPoints.point2)
+                currentPoint = 1
+            end
             wait(delayTime)
-            teleportTo(teleportPoints.point2)
         end
     end
 end)
