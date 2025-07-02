@@ -1,6 +1,11 @@
 -- ✅ Arii Teleport GUI FINAL | HWID Lock + Cheat Defend | Delta Safe
 -- Developer: AriiSetiawan
 
+-- Hanya berjalan di Climb and Jump Tower (Tokyo Tower)
+if game.PlaceId ~= 123921593837160 then
+    return warn("[Teleport GUI] Script hanya berjalan di game Climb and Jump Tower (Tokyo Tower).")
+end
+
 -- Proteksi Fungsi File (Delta Friendly)
 if not (writefile and readfile and isfile) then
     getgenv().writefile = function() end
