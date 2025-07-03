@@ -24,6 +24,17 @@ local autoTeleport = false
 local delayTime = 8
 
 -- ✅ Anti Gacha Animasi (Remote & GUI)
+local eggRemote = ReplicatedStorage:FindFirstChild("RemoteEvent") and ReplicatedStorage.RemoteEvent:FindFirstChild("Egg")
+if eggRemote then
+    eggRemote.OnClientEvent:Connect(function(action, data)
+        if action == "Start" or action == "Anim" then
+            return
+        else
+            return eggRemote:FireServer(action, data)
+        end
+    end)
+end
+
 local function disableGachaAnimationUI()
     local gui = player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("EggOpen")
     if gui then
@@ -36,23 +47,11 @@ local function disableGachaAnimationUI()
     end
 end
 
-task.spawn(function()
-    while true do
-        disableGachaAnimationUI()
-        task.wait(2)
-    end
-end)
+game.Loaded:Connect(disableGachaAnimationUI)
+task.delay(2, disableGachaAnimationUI)
 
-local eggRemote = ReplicatedStorage:FindFirstChild("RemoteEvent") and ReplicatedStorage.RemoteEvent:FindFirstChild("Egg")
-if eggRemote then
-    eggRemote.OnClientEvent:Connect(function(action)
-        if action == "Start" or action == "Anim" then
-            return -- Blokir animasi
-        end
-    end)
-end
+warn("[Anti Gacha Anim] Aktif di Climb and Jump Tower!")
 
--- ✅ Anti Staff & Cheat
 local blacklist = {
     ["mach383"] = true, ["ixNazzz"] = true, ["Evgeniy444444"] = true,
     ["legendxlenn"] = true, ["VicSimon8"] = true, ["Woodrowlvan_8"] = true,
@@ -89,89 +88,152 @@ StarterGui:SetCore("SendNotification", {
     Title = "Anti Cheat", Text = "Proteksi sederhana diaktifkan", Duration = 5
 })
 
--- ✅ UI Menu
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "TeleportGUI"
-
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 160, 0, 220)
-Frame.Position = UDim2.new(0.05, 0, 0.4, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = true
-
-local function createBtn(txt, posY, cb)
-    local btn = Instance.new("TextButton", Frame)
-    btn.Size = UDim2.new(1, -10, 0, 24)
-    btn.Position = UDim2.new(0, 5, 0, posY)
-    btn.BackgroundColor3 = Color3.fromRGB(80, 80, 160)
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 13
-    btn.Text = txt
-    btn.BorderSizePixel = 0
-    btn.MouseButton1Click:Connect(cb)
-    return btn
+local function loadPoints()
+    if isfile(filename) then
+        local success, data = pcall(function()
+            return HttpService:JSONDecode(readfile(filename))
+        end)
+        if success and type(data) == "table" then
+            teleportPoints = data
+        end
+    end
 end
 
-createBtn("📌 Set Point 1", 10, function()
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        teleportPoints.point1 = {x = hrp.Position.X, y = hrp.Position.Y, z = hrp.Position.Z}
-        savePoints()
+local function savePoints()
+    pcall(function()
+        writefile(filename, HttpService:JSONEncode(teleportPoints))
+    end)
+end
+
+local function getHRP()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+local function teleportTo(point)
+    if point then
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = getHRP()
+        hrp.Anchored = true
+        hrp.Velocity = Vector3.zero
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Physics) end
+        wait(0.05)
+        char:PivotTo(CFrame.new(point.x, point.y + 3, point.z))
+        wait(0.05)
+        hrp.Anchored = false
+        if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Running) end
     end
-end)
+end
 
-createBtn("📌 Set Point 2", 40, function()
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        teleportPoints.point2 = {x = hrp.Position.X, y = hrp.Position.Y, z = hrp.Position.Z}
-        savePoints()
-    end
-end)
+-- UI Building
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "TeleportGUI"
+pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
 
-createBtn("🚀 Teleport ke Point 1", 70, function()
-    teleportTo(teleportPoints.point1)
-end)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 145, 0, 180)
+MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
 
-createBtn("🚀 Teleport ke Point 2", 100, function()
-    teleportTo(teleportPoints.point2)
-end)
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 16)
+title.Text = "Arii"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+title.BorderSizePixel = 0
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 14
+title.Parent = MainFrame
 
-createBtn("▶️ Auto Teleport ON/OFF", 130, function()
-    autoTeleport = not autoTeleport
-end)
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 14, 0, 14)
+minimizeButton.Position = UDim2.new(1, -14, 0, 0)
+minimizeButton.Text = "-"
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+minimizeButton.BorderSizePixel = 0
+minimizeButton.Parent = MainFrame
 
-createBtn("💾 Simpan Data", 160, function()
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, -16)
+contentFrame.Position = UDim2.new(0, 0, 0, 16)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = MainFrame
+
+local function createButton(text, y, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, -10, 0, 18)
+    b.Position = UDim2.new(0, 5, 0, y)
+    b.BackgroundColor3 = Color3.fromRGB(80, 80, 160)
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.BorderSizePixel = 0
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 13
+    b.Text = text
+    b.Parent = contentFrame
+    b.MouseButton1Click:Connect(callback)
+    return b
+end
+
+createButton("🚀 Teleport to Point 1", 5, function() teleportTo(teleportPoints.point1) end)
+createButton("🚀 Teleport to Point 2", 28, function() teleportTo(teleportPoints.point2) end)
+createButton("📌 Set Point 1", 51, function()
+    local hrp = getHRP()
+    teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
+    savePoints()
+end)
+createButton("📌 Set Point 2", 74, function()
+    local hrp = getHRP()
+    teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
     savePoints()
 end)
 
-local delayBox = Instance.new("TextBox", Frame)
-delayBox.Size = UDim2.new(1, -10, 0, 24)
-delayBox.Position = UDim2.new(0, 5, 0, 190)
-delayBox.PlaceholderText = "Delay (detik): " .. tostring(delayTime)
-delayBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-delayBox.TextColor3 = Color3.new(1, 1, 1)
-delayBox.ClearTextOnFocus = false
+local delayBox = Instance.new("TextBox")
+delayBox.Size = UDim2.new(1, -10, 0, 18)
+delayBox.Position = UDim2.new(0, 5, 0, 97)
+delayBox.PlaceholderText = "Delay detik"
 delayBox.Text = tostring(delayTime)
-delayBox.Font = Enum.Font.SourceSans
+delayBox.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+delayBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+delayBox.BorderSizePixel = 0
+delayBox.ClearTextOnFocus = false
+delayBox.Parent = contentFrame
 
--- Delay input
 delayBox.FocusLost:Connect(function()
     local val = tonumber(delayBox.Text)
-    if val and val > 0 then
-        delayTime = val
-    end
+    if val and val > 0 then delayTime = val end
 end)
 
--- Teleport Loop
+local autoBtn = createButton("▶️ Start Auto Teleport", 120, function()
+    autoTeleport = not autoTeleport
+    autoBtn.Text = autoTeleport and "⏹ Stop Auto Teleport" or "▶️ Start Auto Teleport"
+end)
+
+createButton("❌ OFF Auto Teleport", 143, function()
+    autoTeleport = false
+    autoBtn.Text = "▶️ Start Auto Teleport"
+end)
+
+local credit = Instance.new("TextLabel")
+credit.Size = UDim2.new(1, 0, 0, 14)
+credit.Position = UDim2.new(0, 0, 1, -14)
+credit.BackgroundTransparency = 1
+credit.TextColor3 = Color3.fromRGB(180, 180, 180)
+credit.Font = Enum.Font.SourceSansItalic
+credit.TextSize = 11
+credit.Text = "By Ari"
+credit.Parent = MainFrame
+
 spawn(function()
-    while true do
-        task.wait(1)
+    while true do wait(1)
         if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
             teleportTo(teleportPoints.point1)
-            task.wait(delayTime)
+            wait(delayTime)
             teleportTo(teleportPoints.point2)
         end
     end
@@ -180,7 +242,7 @@ end)
 for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
 
 RunService.Stepped:Connect(function()
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    local hrp = getHRP()
     if hrp and not hrp.Anchored then
         hrp.Velocity = Vector3.new(0, math.max(hrp.Velocity.Y, -50), 0)
     end
@@ -188,4 +250,17 @@ end)
 
 loadPoints()
 
-warn("[Arii GUI] Teleport + Anti Gacha Animasi aktif.")
+local minimized = false
+minimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    contentFrame.Visible = not minimized
+    minimizeButton.Text = minimized and "+" or "-"
+end)
+
+player.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid").StateChanged:Connect(function(_, newState)
+        if newState == Enum.HumanoidStateType.Physics then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end
+    end)
+end)
