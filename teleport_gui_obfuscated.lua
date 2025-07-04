@@ -1,12 +1,6 @@
--- ✅ Teleport GUI "Arii" FINAL Version | HWID Lock + Deep Scan + Delta Safe
--- Developer: AriiSetiawan
--- Hanya berjalan di Climb and Jump Tower (Tokyo Tower)
+-- ✅ Teleport GUI "Arii" versi UI CLIMB AND JUMP
+-- Fitur: Teleport 2 titik, auto teleport, delay, anti cheat, anti staff, minimize
 
-if game.PlaceId ~= 123921593837160 then
-    return warn("[Teleport GUI] Script hanya berjalan di Climb and Jump Tower (Tokyo Tower).")
-end
-
--- Proteksi Fungsi File (Delta Friendly)
 if not (writefile and readfile and isfile) then
     getgenv().writefile = function() end
     getgenv().readfile = function() return "{}" end
@@ -17,66 +11,15 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local PlayerGui = player:WaitForChild("PlayerGui")
 local filename = "teleport_points.json"
 local teleportPoints = {point1 = nil, point2 = nil}
 local autoTeleport = false
 local delayTime = 8
+local currentTarget = 1
 
--- ✅ HWID Lock (Bypass untuk supa_loi dan Devrenzx)
-local allowedHWID = "hwid_arix_2024"
-local function getHWID()
-    return (identifyexecutor and identifyexecutor() or "") .. (gethwid and gethwid() or "")
-end
-
-if not table.find({"supa_loi", "Devrenzx"}, player.Name) then
-    local currentHWID = getHWID()
-    if not currentHWID:lower():find(allowedHWID:lower()) then
-        player:Kick("HWID tidak dikenali.")
-        return
-    end
-end
-
--- ✅ Anti Admin Deep Scan
-local suspicious = {"admin", "staff", "mod", "dev", "owner", "helper"}
-for _, v in ipairs(Players:GetPlayers()) do
-    if v ~= player then
-        for _, word in ipairs(suspicious) do
-            if string.find(v.Name:lower(), word) or string.find(v.DisplayName:lower(), word) then
-                player:Kick("Admin/Staff terdeteksi melalui Deep Scan")
-                return
-            end
-        end
-    end
-end
-
--- ✅ Anti Gacha Animasi (Remote & GUI)
-local eggRemote = ReplicatedStorage:FindFirstChild("RemoteEvent") and ReplicatedStorage.RemoteEvent:FindFirstChild("Egg")
-if eggRemote then
-    eggRemote.OnClientEvent:Connect(function(action, data)
-        if action == "Start" or action == "Anim" then
-            return
-        else
-            return eggRemote:FireServer(action, data)
-        end
-    end)
-end
-
-task.delay(2, function()
-    local gui = player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("EggOpen")
-    if gui then
-        gui.Enabled = false
-        for _, obj in pairs(gui:GetDescendants()) do
-            if obj:IsA("Tween") or obj:IsA("Animation") or obj:IsA("Sound") then
-                obj:Destroy()
-            end
-        end
-    end
-end)
-
-warn("[Anti Gacha Anim] Aktif di Climb and Jump Tower!")
-
--- ✅ Blacklist Staff
+-- 🔒 Blacklist Anti Staff
 local blacklist = {
     ["mach383"] = true, ["ixNazzz"] = true, ["Evgeniy444444"] = true,
     ["legendxlenn"] = true, ["VicSimon8"] = true, ["Woodrowlvan_8"] = true,
@@ -87,6 +30,10 @@ local blacklist = {
 
 Players.PlayerAdded:Connect(function(p)
     if blacklist[p.Name] then
+        StarterGui:SetCore("SendNotification", {
+            Title = "Auto Leave", Text = "Staff terdeteksi. Keluar game.", Duration = 1
+        })
+        wait(2)
         player:Kick("Staff terdeteksi")
     end
 end)
@@ -97,7 +44,6 @@ for _, p in pairs(Players:GetPlayers()) do
     end
 end
 
--- ✅ Proteksi Remote Hilang
 pcall(function()
     for _,v in pairs(getnilinstances()) do
         if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
@@ -106,7 +52,11 @@ pcall(function()
     end
 end)
 
--- ✅ Load & Save Teleport Point
+StarterGui:SetCore("SendNotification", {
+    Title = "Anti Cheat", Text = "Proteksi sederhana diaktifkan", Duration = 5
+})
+
+-- 🔧 Helper & Core
 local function loadPoints()
     if isfile(filename) then
         local success, data = pcall(function()
@@ -124,7 +74,6 @@ local function savePoints()
     end)
 end
 
--- ✅ Fungsi Teleport
 local function getHRP()
     local char = player.Character or player.CharacterAdded:Wait()
     return char:WaitForChild("HumanoidRootPart")
@@ -146,117 +95,119 @@ local function teleportTo(point)
     end
 end
 
--- ✅ UI (Delta Friendly - PlayerGui)
-local gui = Instance.new("ScreenGui")
-gui.Name = "TeleportGUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+-- 📦 UI (gaya CLIMB AND JUMP)
+local Gui = Instance.new("ScreenGui", PlayerGui)
+Gui.Name = "CLIMB_JUMP_UI"
+Gui.ResetOnSpawn = false
 
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 145, 0, 180)
-main.Position = UDim2.new(0.05, 0, 0.2, 0)
-main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-main.Active = true
-main.Draggable = true
+local Frame = Instance.new("Frame", Gui)
+Frame.Size = UDim2.new(0, 170, 0, 170)
+Frame.Position = UDim2.new(0, 10, 0.5, -85)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
+Frame.Active = true
+Frame.Draggable = true
 
-local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1, 0, 0, 16)
-title.Text = "Arii"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 14
+local Title = Instance.new("TextLabel", Frame)
+Title.Text = "CLIMB AND JUMP"
+Title.Size = UDim2.new(1, 0, 0, 26)
+Title.BackgroundColor3 = Color3.fromRGB(70, 40, 120)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 13
 
-local minimize = Instance.new("TextButton", main)
-minimize.Size = UDim2.new(0, 14, 0, 14)
-minimize.Position = UDim2.new(1, -14, 0, 0)
-minimize.Text = "-"
-minimize.TextColor3 = Color3.new(1, 1, 1)
-minimize.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+local MinBtn = Instance.new("TextButton", Frame)
+MinBtn.Text = "-"
+MinBtn.Size = UDim2.new(0, 28, 0, 26)
+MinBtn.Position = UDim2.new(1, -30, 0, 0)
+MinBtn.BackgroundColor3 = Color3.fromRGB(100, 80, 180)
+MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local content = Instance.new("Frame", main)
-content.Position = UDim2.new(0, 0, 0, 16)
-content.Size = UDim2.new(1, 0, 1, -16)
-content.BackgroundTransparency = 1
-
-local function button(text, y, callback)
-    local b = Instance.new("TextButton", content)
-    b.Size = UDim2.new(1, -10, 0, 18)
-    b.Position = UDim2.new(0, 5, 0, y)
-    b.BackgroundColor3 = Color3.fromRGB(80, 80, 160)
-    b.TextColor3 = Color3.new(1, 1, 1)
-    b.BorderSizePixel = 0
-    b.Font = Enum.Font.SourceSansBold
-    b.TextSize = 13
-    b.Text = text
-    b.MouseButton1Click:Connect(callback)
-    return b
+local function makeBtn(txt, y, color)
+    local btn = Instance.new("TextButton", Frame)
+    btn.Size = UDim2.new(1, -16, 0, 26)
+    btn.Position = UDim2.new(0, 8, 0, y)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.Text = txt
+    return btn
 end
 
-button("🚀 Teleport Point 1", 5, function() teleportTo(teleportPoints.point1) end)
-button("🚀 Teleport Point 2", 28, function() teleportTo(teleportPoints.point2) end)
-button("📌 Set Point 1", 51, function()
+local AutoBtn = makeBtn("🔁 Auto Teleport [OFF]", 32, Color3.fromRGB(50, 90, 160))
+local Point1Btn = makeBtn("📍 Set Point 1", 62, Color3.fromRGB(100, 60, 180))
+local Point2Btn = makeBtn("📍 Set Point 2", 92, Color3.fromRGB(140, 60, 200))
+
+local DelayBox = Instance.new("TextBox", Frame)
+DelayBox.Size = UDim2.new(1, -16, 0, 26)
+DelayBox.Position = UDim2.new(0, 8, 0, 122)
+DelayBox.PlaceholderText = "⏱ Delay (1-10)"
+DelayBox.ClearTextOnFocus = false
+DelayBox.Text = tostring(delayTime)
+DelayBox.BackgroundColor3 = Color3.fromRGB(70, 70, 120)
+DelayBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+DelayBox.Font = Enum.Font.Gotham
+DelayBox.TextSize = 13
+
+-- 🔘 Fungsi Tombol
+AutoBtn.MouseButton1Click:Connect(function()
+    autoTeleport = not autoTeleport
+    AutoBtn.Text = autoTeleport and "⏹ Stop Auto Teleport" or "🔁 Auto Teleport [OFF]"
+end)
+
+Point1Btn.MouseButton1Click:Connect(function()
     local hrp = getHRP()
     teleportPoints.point1 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
     savePoints()
 end)
-button("📌 Set Point 2", 74, function()
+
+Point2Btn.MouseButton1Click:Connect(function()
     local hrp = getHRP()
     teleportPoints.point2 = {x=hrp.Position.X, y=hrp.Position.Y, z=hrp.Position.Z}
     savePoints()
 end)
 
-local delayBox = Instance.new("TextBox", content)
-delayBox.Position = UDim2.new(0, 5, 0, 97)
-delayBox.Size = UDim2.new(1, -10, 0, 18)
-delayBox.PlaceholderText = "Delay detik"
-delayBox.Text = tostring(delayTime)
-delayBox.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
-delayBox.TextColor3 = Color3.new(1, 1, 1)
-delayBox.ClearTextOnFocus = false
-
-delayBox.FocusLost:Connect(function()
-    local val = tonumber(delayBox.Text)
-    if val and val > 0 then delayTime = val end
+DelayBox.FocusLost:Connect(function()
+    local val = tonumber(DelayBox.Text)
+    if val and val >= 1 then delayTime = val end
 end)
 
-local autoBtn = button("▶️ Start Auto Teleport", 120, function()
-    autoTeleport = not autoTeleport
-    autoBtn.Text = autoTeleport and "⏹ Stop Auto Teleport" or "▶️ Start Auto Teleport"
-end)
-
-button("❌ OFF Auto Teleport", 143, function()
-    autoTeleport = false
-    autoBtn.Text = "▶️ Start Auto Teleport"
-end)
-
-local minimized = false
-minimize.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    content.Visible = not minimized
-    minimize.Text = minimized and "+" or "-"
-end)
-
+-- 🔁 Auto Teleport Loop
 spawn(function()
-    while true do wait(1)
+    while wait(1) do
         if autoTeleport and teleportPoints.point1 and teleportPoints.point2 then
-            teleportTo(teleportPoints.point1)
+            if currentTarget == 1 then
+                teleportTo(teleportPoints.point1)
+                currentTarget = 2
+            else
+                teleportTo(teleportPoints.point2)
+                currentTarget = 1
+            end
             wait(delayTime)
-            teleportTo(teleportPoints.point2)
         end
     end
 end)
 
-for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
+-- 🔘 Minimize Logic
+local minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    for _,v in pairs(Frame:GetChildren()) do
+        if (v:IsA("TextButton") or v:IsA("TextBox")) and v ~= MinBtn then
+            v.Visible = not minimized
+        end
+    end
+    Frame.Size = minimized and UDim2.new(0, 140, 0, 26) or UDim2.new(0, 170, 0, 170)
+end)
 
+-- 🛡 Anti Idle + Reset Physics
+for _,v in pairs(getconnections(player.Idled)) do v:Disable() end
 RunService.Stepped:Connect(function()
     local hrp = getHRP()
     if hrp and not hrp.Anchored then
         hrp.Velocity = Vector3.new(0, math.max(hrp.Velocity.Y, -50), 0)
     end
 end)
-
-loadPoints()
 
 player.CharacterAdded:Connect(function(char)
     char:WaitForChild("Humanoid").StateChanged:Connect(function(_, newState)
@@ -265,3 +216,6 @@ player.CharacterAdded:Connect(function(char)
         end
     end)
 end)
+
+-- ⏬ Load
+loadPoints()
